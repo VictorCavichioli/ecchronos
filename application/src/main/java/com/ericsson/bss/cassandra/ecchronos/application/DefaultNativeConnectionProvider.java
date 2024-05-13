@@ -22,10 +22,13 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import com.ericsson.bss.cassandra.ecchronos.application.config.connection.DatacenterAwareConfig;
 import com.ericsson.bss.cassandra.ecchronos.application.config.connection.NativeConnection;
 import com.ericsson.bss.cassandra.ecchronos.application.config.exceptions.RetryPolicyException;
 import com.ericsson.bss.cassandra.ecchronos.connection.CertificateHandler;
 import com.ericsson.bss.cassandra.ecchronos.core.repair.DefaultRepairConfigurationProvider;
+import com.ericsson.bss.cassandra.ecchronos.core.sync.EccNodesSync;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +37,14 @@ import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import com.ericsson.bss.cassandra.ecchronos.application.config.RetryPolicy;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.Security;
 import com.ericsson.bss.cassandra.ecchronos.connection.NativeConnectionProvider;
+import com.ericsson.bss.cassandra.ecchronos.connection.StatementDecorator;
 import com.ericsson.bss.cassandra.ecchronos.connection.impl.LocalNativeConnectionProvider;
 
 public class DefaultNativeConnectionProvider implements NativeConnectionProvider
 {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNativeConnectionProvider.class);
 
-    private final LocalNativeConnectionProvider myLocalNativeConnectionProvider;
+    private LocalNativeConnectionProvider myLocalNativeConnectionProvider;
 
     public DefaultNativeConnectionProvider(final Config config,
                                            final Supplier<Security.CqlSecurity> cqlSecuritySupplier,
@@ -93,6 +97,69 @@ public class DefaultNativeConnectionProvider implements NativeConnectionProvider
         this(config, cqlSecuritySupplier,
                 new ReloadingCertificateHandler(() -> cqlSecuritySupplier.get().getCqlTlsConfig()),
                 defaultRepairConfigurationProvider, meterRegistry);
+    }
+
+    public DefaultNativeConnectionProvider(final Config config,
+                                           final Supplier<Security.CqlSecurity> cqlSecuritySupplier,
+                                           final CertificateHandler certificateHandler,
+                                           final DefaultRepairConfigurationProvider defaultRepairConfigurationProvider,
+                                           final MeterRegistry meterRegistry,
+                                           final DatacenterAwareConfig datacenterAwareConfig,
+                                           final StatementDecorator statementDecorator)
+    {
+        NativeConnection nativeConfig = config.getConnectionConfig().getCqlConnection();
+        boolean remoteRouting = nativeConfig.getRemoteRouting();
+        Security.CqlSecurity cqlSecurity = cqlSecuritySupplier.get();
+        boolean authEnabled = cqlSecurity.getCqlCredentials().isEnabled();
+        boolean tlsEnabled = cqlSecurity.getCqlTlsConfig().isEnabled();
+
+        AuthProvider authProvider = null;
+        if (authEnabled)
+        {
+            authProvider = new ReloadingAuthProvider(() -> cqlSecuritySupplier.get().getCqlCredentials());
+        }
+
+        SslEngineFactory sslEngineFactory = null;
+        if (tlsEnabled)
+        {
+            sslEngineFactory = certificateHandler;
+        }
+        for (DatacenterAwareConfig.Datacenter datacenter : datacenterAwareConfig.getDatacenterConfig().values())
+        {
+            String dcName = datacenter.getName();
+            LOG.info("Establishing first connection with Datacenter: {}.", dcName);
+            for (DatacenterAwareConfig.Host host : datacenter.getHosts())
+            {
+                String hostIp = host.getHost();
+                int port = host.getPort();
+                LOG.info("Connecting through CQL using {}:{}, authentication: {}, tls: {}",
+                    hostIp, port, authEnabled, tlsEnabled);
+                LocalNativeConnectionProvider.Builder nativeConnectionBuilder = LocalNativeConnectionProvider.builder()
+                        .withLocalhost(hostIp)
+                        .withPort(port)
+                        .withRemoteRouting(remoteRouting)
+                        .withAuthProvider(authProvider)
+                        .withSslEngineFactory(sslEngineFactory)
+                        .withMetricsEnabled(config.getStatisticsConfig().isEnabled())
+                        .withMeterRegistry(meterRegistry)
+                        .withSchemaChangeListener(defaultRepairConfigurationProvider)
+                        .withNodeStateListener(defaultRepairConfigurationProvider);
+                try
+                {
+                    myLocalNativeConnectionProvider = tryEstablishConnection(nativeConnectionBuilder);
+                    EccNodesSync myEccNodesSync = new EccNodesSync
+                        .Builder()
+                        .withSession(myLocalNativeConnectionProvider.getSession())
+                        .withStatementDecorator(statementDecorator).build();
+                    myEccNodesSync.acquireNode(hostIp, port, myLocalNativeConnectionProvider.getLocalNode());
+                    LOG.info("Connection with that node finished");
+                }
+                catch (Exception e)
+                {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+        }
     }
 
     private static LocalNativeConnectionProvider establishConnection(

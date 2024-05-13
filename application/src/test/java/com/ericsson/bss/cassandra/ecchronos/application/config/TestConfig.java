@@ -98,10 +98,51 @@ public class TestConfig
         assertThat(nativeConnection.getCertificateHandlerClass()).isEqualTo(TestCertificateHandler.class);
         assertThat(nativeConnection.getDecoratorClass()).isEqualTo(TestStatementDecorator.class);
 
+        assertThat(nativeConnection.getDatacenterAwareConfig()).isNotNull();
+        assertThat(nativeConnection.getDatacenterAwareConfig().isEnabled()).isEqualTo(true);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getHost()).isEqualTo("127.0.0.1");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getHost()).isEqualTo("127.0.0.2");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getHost()).isEqualTo("127.0.0.3");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getHost()).isEqualTo("127.0.0.4");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getPort()).isEqualTo(9042);
+
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(0).getHost()).isEqualTo("127.0.0.1");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(0).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(1).getHost()).isEqualTo("127.0.0.2");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(1).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(2).getHost()).isEqualTo("127.0.0.3");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(2).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(3).getHost()).isEqualTo("127.0.0.4");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(3).getPort()).isEqualTo(9042);
+
+
         Connection jmxConnection = connection.getJmxConnection();
         assertThat(jmxConnection.getHost()).isEqualTo("127.0.0.3");
         assertThat(jmxConnection.getPort()).isEqualTo(7100);
         assertThat(jmxConnection.getProviderClass()).isEqualTo(TestJmxConnectionProvider.class);
+
+        assertThat(jmxConnection.getDatacenterAwareConfig()).isNotNull();
+        assertThat(jmxConnection.getDatacenterAwareConfig().isEnabled()).isEqualTo(true);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getHost()).isEqualTo("127.0.0.1");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getPort()).isEqualTo(7100);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getHost()).isEqualTo("127.0.0.2");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getPort()).isEqualTo(7200);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getHost()).isEqualTo("127.0.0.3");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getPort()).isEqualTo(7300);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getHost()).isEqualTo("127.0.0.4");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getPort()).isEqualTo(7400);
+
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(0).getHost()).isEqualTo("127.0.0.1");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(0).getPort()).isEqualTo(7100);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(1).getHost()).isEqualTo("127.0.0.2");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(1).getPort()).isEqualTo(7200);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(2).getHost()).isEqualTo("127.0.0.3");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(2).getPort()).isEqualTo(7300);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(3).getHost()).isEqualTo("127.0.0.4");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter2").getHosts().get(3).getPort()).isEqualTo(7400);
 
         RepairConfiguration expectedConfiguration = RepairConfiguration.newBuilder()
                 .withRepairInterval(24, TimeUnit.HOURS)
@@ -199,10 +240,35 @@ public class TestConfig
         assertThat(nativeConnection.getCertificateHandlerClass()).isEqualTo(ReloadingCertificateHandler.class);
         assertThat(nativeConnection.getDecoratorClass()).isEqualTo(NoopStatementDecorator.class);
 
+        // datacenterAware config
+        assertThat(nativeConnection.getDatacenterAwareConfig()).isNotNull();
+        assertThat(nativeConnection.getDatacenterAwareConfig().isEnabled()).isEqualTo(false);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getHost()).isEqualTo("127.0.0.1");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getHost()).isEqualTo("127.0.0.2");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getHost()).isEqualTo("127.0.0.3");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getPort()).isEqualTo(9042);
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getHost()).isEqualTo("127.0.0.4");
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getPort()).isEqualTo(9042);
+
+        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig()).isNotNull();
+
         Connection jmxConnection = connection.getJmxConnection();
         assertThat(jmxConnection.getHost()).isEqualTo("localhost");
         assertThat(jmxConnection.getPort()).isEqualTo(7199);
         assertThat(jmxConnection.getProviderClass()).isEqualTo(DefaultJmxConnectionProvider.class);
+
+        assertThat(jmxConnection.getDatacenterAwareConfig()).isNotNull();
+        assertThat(jmxConnection.getDatacenterAwareConfig().isEnabled()).isEqualTo(false);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getHost()).isEqualTo("127.0.0.1");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(0).getPort()).isEqualTo(7100);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getHost()).isEqualTo("127.0.0.2");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(1).getPort()).isEqualTo(7200);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getHost()).isEqualTo("127.0.0.3");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(2).getPort()).isEqualTo(7300);
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getHost()).isEqualTo("127.0.0.4");
+        assertThat(jmxConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get(3).getPort()).isEqualTo(7400);
 
         RepairConfiguration expectedConfiguration = RepairConfiguration.newBuilder()
                 .withRepairInterval(7, TimeUnit.DAYS)
@@ -288,6 +354,10 @@ public class TestConfig
         assertThat(nativeConnection.getProviderClass()).isEqualTo(DefaultNativeConnectionProvider.class);
         assertThat(nativeConnection.getCertificateHandlerClass()).isEqualTo(ReloadingCertificateHandler.class);
         assertThat(nativeConnection.getDecoratorClass()).isEqualTo(NoopStatementDecorator.class);
+
+//        assertThat(nativeConnection.getDatacenterAwareConfig()).isNotNull();
+//        assertThat(nativeConnection.getDatacenterAwareConfig().isEnabled()).isEqualTo(false);
+//        assertThat(nativeConnection.getDatacenterAwareConfig().getDatacenterConfig().get("datacenter1").getHosts().get("localhost").getPort()).isEqualTo(9042);
 
         Connection jmxConnection = connection.getJmxConnection();
         assertThat(jmxConnection.getHost()).isEqualTo("localhost");

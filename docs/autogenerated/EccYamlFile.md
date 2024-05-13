@@ -10,6 +10,20 @@
 # Host and port properties for CQL.
 # Primarily used by the default connection provider
 #
+**datacenterAware:**
+* enabled: false
+**datacenters:**
+* - name: datacenter1
+**hosts:**
+* - host: 127.0.0.1
+* port: 9042
+* - host: 127.0.0.2
+* port: 9042
+* - host: 127.0.0.3
+* port: 9042
+* - host: 127.0.0.4
+* port: 9042
+
 * host: localhost
 * port: 9042
 #
@@ -59,6 +73,19 @@
 # Host and port properties for JMX.
 # Primarily used by the default connection provider.
 #
+**datacenterAware:**
+* enabled: false
+**datacenters:**
+* - name: datacenter1
+**hosts:**
+* - host: 127.0.0.1
+* port: 7100
+* - host: 127.0.0.2
+* port: 7200
+* - host: 127.0.0.3
+* port: 7300
+* - host: 127.0.0.4
+* port: 7400
 * host: localhost
 * port: 7199
 #

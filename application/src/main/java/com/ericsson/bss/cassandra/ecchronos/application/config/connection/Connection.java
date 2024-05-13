@@ -30,6 +30,7 @@ public abstract class Connection<T>
     private Class<? extends CertificateHandler> myCertificateHandlerClass;
     private Timeout myTimeout = new Timeout();
     private RetryPolicy myRetryPolicy = new RetryPolicy();
+    private DatacenterAwareConfig myDatacenterAwareConfig = new DatacenterAwareConfig();
 
     @JsonProperty("host")
     public final String getHost()
@@ -41,6 +42,12 @@ public abstract class Connection<T>
     public final int getPort()
     {
         return myPort;
+    }
+
+    @JsonProperty("datacenterAware")
+    public final DatacenterAwareConfig getDatacenterAwareConfig()
+    {
+        return myDatacenterAwareConfig;
     }
 
     @JsonProperty("provider")
@@ -65,6 +72,12 @@ public abstract class Connection<T>
     public final RetryPolicy getRetryPolicy()
     {
         return myRetryPolicy;
+    }
+
+    @JsonProperty("datacenterAware")
+    public final void setDatacenterAwareConfig(final DatacenterAwareConfig datacenterAwareConfig)
+    {
+        myDatacenterAwareConfig = datacenterAwareConfig;
     }
 
     @JsonProperty("host")

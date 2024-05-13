@@ -39,6 +39,7 @@ import com.ericsson.bss.cassandra.ecchronos.application.ReflectionUtils;
 import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import com.ericsson.bss.cassandra.ecchronos.application.config.ConfigRefresher;
 import com.ericsson.bss.cassandra.ecchronos.application.config.ConfigurationHelper;
+import com.ericsson.bss.cassandra.ecchronos.application.config.connection.DatacenterAwareConfig;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.Security;
 import com.ericsson.bss.cassandra.ecchronos.connection.JmxConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.connection.NativeConnectionProvider;
@@ -131,22 +132,27 @@ public class BeanConfigurator
     @Bean
     public NativeConnectionProvider nativeConnectionProvider(final Config config,
             final DefaultRepairConfigurationProvider defaultRepairConfigurationProvider,
-            final MeterRegistry eccCompositeMeterRegistry) throws ConfigurationException
+            final MeterRegistry eccCompositeMeterRegistry,
+            final StatementDecorator statementDecorator) throws ConfigurationException
     {
         return getNativeConnectionProvider(config, cqlSecurity::get, defaultRepairConfigurationProvider,
-                eccCompositeMeterRegistry);
+                eccCompositeMeterRegistry, statementDecorator);
     }
 
     public static NativeConnectionProvider getNativeConnectionProvider(
         final Config configuration,
         final Supplier<Security.CqlSecurity> securitySupplier,
         final DefaultRepairConfigurationProvider defaultRepairConfigurationProvider,
-        final MeterRegistry meterRegistry) throws ConfigurationException
+        final MeterRegistry meterRegistry,
+        final StatementDecorator statementDecorator) throws ConfigurationException
     {
 
         Supplier tlsSupplier = () -> securitySupplier.get().getCqlTlsConfig();
         CertificateHandler certificateHandler = createCertificateHandler(configuration, tlsSupplier);
-
+        boolean datacenterAware = configuration.getConnectionConfig()
+            .getCqlConnection().getDatacenterAwareConfig().isEnabled();
+        DatacenterAwareConfig datacenterAwareConfig = configuration
+            .getConnectionConfig().getCqlConnection().getDatacenterAwareConfig();
         Class<?> providerClass = configuration.getConnectionConfig().getCqlConnection().getProviderClass();
 
         try
@@ -154,13 +160,28 @@ public class BeanConfigurator
             Object[] constructorArgs;
             if (DefaultNativeConnectionProvider.class.equals(providerClass))
             {
-                constructorArgs = new Object[] {
+                if (datacenterAware)
+                {
+                    constructorArgs = new Object[] {
+                        configuration,
+                        securitySupplier,
+                        certificateHandler,
+                        defaultRepairConfigurationProvider,
+                        meterRegistry,
+                        datacenterAwareConfig,
+                        statementDecorator
+                    };
+                }
+                else
+                {
+                    constructorArgs = new Object[] {
                         configuration,
                         securitySupplier,
                         certificateHandler,
                         defaultRepairConfigurationProvider,
                         meterRegistry
-                };
+                    };
+                }
             }
             else
             {
@@ -176,7 +197,7 @@ public class BeanConfigurator
 
             return (NativeConnectionProvider) ReflectionUtils.construct(
                     providerClass,
-                    getConstructorParameterTypes(providerClass),
+                    getConstructorParameterTypes(providerClass, datacenterAware),
                     constructorArgs);
 
         }
@@ -208,17 +229,32 @@ public class BeanConfigurator
         }
     }
 
-    private static Class<?>[] getConstructorParameterTypes(final Class<?> providerClass)
+    private static Class<?>[] getConstructorParameterTypes(final Class<?> providerClass, final boolean datacenterAware)
     {
         if (DefaultNativeConnectionProvider.class.equals(providerClass))
         {
-            return new Class<?>[] {
+            if (datacenterAware)
+            {
+                return new Class<?>[] {
+                    Config.class,
+                    Supplier.class,
+                    CertificateHandler.class,
+                    DefaultRepairConfigurationProvider.class,
+                    MeterRegistry.class,
+                    DatacenterAwareConfig.class,
+                    StatementDecorator.class
+                };
+            }
+            else
+            {
+                return new Class<?>[] {
                     Config.class,
                     Supplier.class,
                     CertificateHandler.class,
                     DefaultRepairConfigurationProvider.class,
                     MeterRegistry.class
-            };
+                };
+            }
         }
         else
         {
@@ -233,15 +269,44 @@ public class BeanConfigurator
     }
 
     @Bean
-    public JmxConnectionProvider jmxConnectionProvider(final Config config) throws ConfigurationException
+    public JmxConnectionProvider jmxConnectionProvider(
+        final Config config,
+        final NativeConnectionProvider nativeConnectionProvider,
+        final StatementDecorator statementDecorator) throws ConfigurationException
     {
-        return getJmxConnectionProvider(config, jmxSecurity::get);
+        return getJmxConnectionProvider(config, jmxSecurity::get, nativeConnectionProvider, statementDecorator);
     }
 
-    private static JmxConnectionProvider getJmxConnectionProvider(final Config configuration,
-                                                                  final Supplier<Security.JmxSecurity> securitySupplier)
+    private static JmxConnectionProvider getJmxConnectionProvider(
+        final Config configuration,
+        final Supplier<Security.JmxSecurity> securitySupplier,
+        final NativeConnectionProvider nativeConnectionProvider,
+        final StatementDecorator statementDecorator)
             throws ConfigurationException
     {
+        Boolean datacenterAware = configuration
+            .getConnectionConfig()
+            .getJmxConnection()
+            .getDatacenterAwareConfig().isEnabled();
+
+        DatacenterAwareConfig datacenterAwareConfig = configuration
+            .getConnectionConfig()
+            .getJmxConnection()
+            .getDatacenterAwareConfig();
+        if (datacenterAware)
+        {
+            return ReflectionUtils
+                .construct(configuration.getConnectionConfig().getJmxConnection().getProviderClass(),
+                        new Class<?>[] {
+                                Config.class, Supplier.class,
+                                DefaultNativeConnectionProvider.class,
+                                DatacenterAwareConfig.class, StatementDecorator.class
+                        },
+                        configuration, securitySupplier,
+                        nativeConnectionProvider,
+                        datacenterAwareConfig, statementDecorator
+                        );
+        }
         return ReflectionUtils
                 .construct(configuration.getConnectionConfig().getJmxConnection().getProviderClass(),
                         new Class<?>[] {
