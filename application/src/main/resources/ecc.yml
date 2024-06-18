@@ -64,6 +64,7 @@ connection:
     ## The class used to provide CQL connections to Apache Cassandra.
     ## The default provider will be used unless another is specified.
     ##
+    ## DatacenterNativeConnectionProvider
     provider: com.ericsson.bss.cassandra.ecchronos.application.DefaultNativeConnectionProvider
     ##
     ## The class used to provide an SSL context to the NativeConnectionProvider.
@@ -83,10 +84,6 @@ connection:
     ##
     remoteRouting: true
   jmx:
-    ##
-    ## Host and port properties for JMX.
-    ## Primarily used by the default connection provider.
-    ##
     datacenterAware:
       enabled: false
       datacenters:

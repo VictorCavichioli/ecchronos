@@ -14,10 +14,12 @@
  */
 package com.ericsson.bss.cassandra.ecchronos.application.config.connection;
 
+import com.ericsson.bss.cassandra.ecchronos.application.DatacenterNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.DefaultNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.NoopStatementDecorator;
 import com.ericsson.bss.cassandra.ecchronos.application.ReloadingCertificateHandler;
 import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
+import com.ericsson.bss.cassandra.ecchronos.connection.CertificateHandler;
 import com.ericsson.bss.cassandra.ecchronos.connection.NativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.connection.StatementDecorator;
 import com.ericsson.bss.cassandra.ecchronos.core.repair.DefaultRepairConfigurationProvider;
@@ -29,15 +31,22 @@ import java.util.function.Supplier;
 public class NativeConnection extends Connection<NativeConnectionProvider>
 {
     private static final int DEFAULT_PORT = 9042;
-
     private Class<? extends StatementDecorator> myDecoratorClass = NoopStatementDecorator.class;
     private boolean myRemoteRouting = true;
+    private DatacenterAwareConfig myDatacenterAwareConfig = new DatacenterAwareConfig();
 
     public NativeConnection()
     {
         try
         {
-            setProvider(DefaultNativeConnectionProvider.class);
+            if (myDatacenterAwareConfig.isEnabled())
+            {
+                setProvider(DatacenterNativeConnectionProvider.class);
+            }
+            else
+            {
+                setProvider(DefaultNativeConnectionProvider.class);
+            }
             setCertificateHandler(ReloadingCertificateHandler.class);
             setPort(DEFAULT_PORT);
         }
@@ -45,6 +54,18 @@ public class NativeConnection extends Connection<NativeConnectionProvider>
         {
             // Do something useful ...
         }
+    }
+
+    @JsonProperty("datacenterAware")
+    public final DatacenterAwareConfig getDatacenterAwareConfig()
+    {
+        return myDatacenterAwareConfig;
+    }
+
+    @JsonProperty("datacenterAware")
+    public final void setDatacenterAwareConfig(final DatacenterAwareConfig datacenterAwareConfig)
+    {
+        myDatacenterAwareConfig = datacenterAwareConfig;
     }
 
     @JsonProperty("decoratorClass")
@@ -77,6 +98,18 @@ public class NativeConnection extends Connection<NativeConnectionProvider>
     @Override
     protected final Class<?>[] expectedConstructor()
     {
+        if (myDatacenterAwareConfig.isEnabled())
+        {
+            return new Class<?>[] {
+                Config.class,
+                Supplier.class,
+                CertificateHandler.class,
+                DefaultRepairConfigurationProvider.class,
+                MeterRegistry.class,
+                DatacenterAwareConfig.class,
+                StatementDecorator.class
+            };
+        }
         return new Class<?>[]
                 {
                         Config.class, Supplier.class, DefaultRepairConfigurationProvider.class, MeterRegistry.class

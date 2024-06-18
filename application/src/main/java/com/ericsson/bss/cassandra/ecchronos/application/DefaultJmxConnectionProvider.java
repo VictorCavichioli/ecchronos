@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 import javax.management.remote.JMXConnector;
 
 import com.ericsson.bss.cassandra.ecchronos.application.config.connection.Connection;
-import com.ericsson.bss.cassandra.ecchronos.application.config.connection.DatacenterAwareConfig;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.JmxTLSConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,71 +30,29 @@ import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.Credentials;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.Security;
 import com.ericsson.bss.cassandra.ecchronos.connection.JmxConnectionProvider;
-import com.ericsson.bss.cassandra.ecchronos.connection.StatementDecorator;
 import com.ericsson.bss.cassandra.ecchronos.connection.impl.LocalJmxConnectionProvider;
-import com.ericsson.bss.cassandra.ecchronos.core.sync.EccNodesSync;
 
 public class DefaultJmxConnectionProvider implements JmxConnectionProvider
 {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultJmxConnectionProvider.class);
 
-    private LocalJmxConnectionProvider myLocalJmxConnectionProvider;
+    private final LocalJmxConnectionProvider myLocalJmxConnectionProvider;
 
     public DefaultJmxConnectionProvider(final Config config,
                                         final Supplier<Security.JmxSecurity> jmxSecurity) throws IOException
     {
-        boolean authEnabled = jmxSecurity.get().getJmxCredentials().isEnabled();
-        boolean tlsEnabled = jmxSecurity.get().getJmxTlsConfig().isEnabled();
-        Supplier<String[]> credentials = () -> convertCredentials(jmxSecurity);
-        Supplier<Map<String, String>> tls = () -> convertTls(jmxSecurity);
         Connection<JmxConnectionProvider> jmxConfig = config.getConnectionConfig().getJmxConnection();
         String host = jmxConfig.getHost();
         int port = jmxConfig.getPort();
-        LOG.info("Connecting through JMX using {}:{}, authentication: {}, tls: {}", host, port, authEnabled,
-                tlsEnabled);
-        myLocalJmxConnectionProvider = new LocalJmxConnectionProvider(host, port, credentials, tls);
-    }
-
-    public DefaultJmxConnectionProvider(final Config config,
-                                        final Supplier<Security.JmxSecurity> jmxSecurity,
-                                        final DefaultNativeConnectionProvider nativeConnectionProvider,
-                                        final DatacenterAwareConfig datacenterAwareConfig,
-                                        final StatementDecorator statementDecorator) throws IOException
-    {
         boolean authEnabled = jmxSecurity.get().getJmxCredentials().isEnabled();
         boolean tlsEnabled = jmxSecurity.get().getJmxTlsConfig().isEnabled();
+        LOG.info("Connecting through JMX using {}:{}, authentication: {}, tls: {}", host, port, authEnabled,
+                tlsEnabled);
+
         Supplier<String[]> credentials = () -> convertCredentials(jmxSecurity);
         Supplier<Map<String, String>> tls = () -> convertTls(jmxSecurity);
 
-        for (DatacenterAwareConfig.Datacenter datacenter : datacenterAwareConfig.getDatacenterConfig().values())
-        {
-            String dcName = datacenter.getName();
-            LOG.info("Establishing first connection with Datacenter: {}.", dcName);
-            for (DatacenterAwareConfig.Host host : datacenter.getHosts())
-            {
-                String hostIp = host.getHost();
-                String tempHost = "127.0.0.1";
-                int port = host.getPort();
-                LOG.info("Connecting through JMX using {}:{}, authentication: {}, tls: {}",
-                    hostIp, port, authEnabled,
-                tlsEnabled);
-
-                EccNodesSync myEccNodesSync = new EccNodesSync
-                        .Builder()
-                        .withSession(nativeConnectionProvider.getSession())
-                        .withStatementDecorator(statementDecorator).build();
-                try
-                {
-                    myLocalJmxConnectionProvider = new LocalJmxConnectionProvider(tempHost, port, credentials, tls);
-                    myEccNodesSync.updateNode(datacenter.getName(), hostIp, port);
-                    LOG.info("Connection with that node finished");
-                }
-                catch (Exception e)
-                {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
-        }
+        myLocalJmxConnectionProvider = new LocalJmxConnectionProvider(host, port, credentials, tls);
     }
 
     @Override

@@ -50,6 +50,7 @@
 # The class used to provide CQL connections to Apache Cassandra.
 # The default provider will be used unless another is specified.
 #
+# DatacenterNativeConnectionProvider
 * provider: com.ericsson.bss.cassandra.ecchronos.application.DefaultNativeConnectionProvider
 #
 # The class used to provide an SSL context to the NativeConnectionProvider.
@@ -73,19 +74,19 @@
 # Host and port properties for JMX.
 # Primarily used by the default connection provider.
 #
-**datacenterAware:**
-* enabled: false
-**datacenters:**
-* - name: datacenter1
-**hosts:**
-* - host: 127.0.0.1
-* port: 7100
-* - host: 127.0.0.2
-* port: 7200
-* - host: 127.0.0.3
-* port: 7300
-* - host: 127.0.0.4
-* port: 7400
+datacenterAware:
+enabled: false
+datacenters:
+- name: datacenter1
+hosts:
+- host: 127.0.0.1
+port: 7100
+- host: 127.0.0.2
+port: 7200
+- host: 127.0.0.3
+port: 7300
+- host: 127.0.0.4
+port: 7400
 * host: localhost
 * port: 7199
 #
@@ -111,7 +112,7 @@
 * unit: days
 #
 # Initial delay for new tables. New tables are always assumed to have been repaired in the past, however a delay
-#  can be set for the first repair. This will not affect subsequent repairs and defaults to one day.
+# can be set for the first repair. This will not affect subsequent repairs and defaults to one day.
 #
 **initial_delay:**
 * time: 1

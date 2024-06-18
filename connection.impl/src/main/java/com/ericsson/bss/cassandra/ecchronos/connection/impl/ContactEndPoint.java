@@ -33,6 +33,11 @@ public class ContactEndPoint implements EndPoint
         this.metricPrefix = buildMetricPrefix(aHostName, aPort);
     }
 
+    public final InetSocketAddress getLastResolvedAddress()
+    {
+        return lastResolvedAddress;
+    }
+
     @Override
     public final InetSocketAddress resolve()
     {

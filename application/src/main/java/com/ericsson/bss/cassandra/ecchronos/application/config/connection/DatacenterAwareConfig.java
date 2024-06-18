@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class DatacenterAwareConfig
@@ -31,10 +33,11 @@ public final class DatacenterAwareConfig
     {
     }
 
-    public DatacenterAwareConfig(final boolean enabled, final Map<String, Datacenter>  datacenterConfig)
+    @JsonCreator
+    public DatacenterAwareConfig(
+        @JsonProperty("enabled") final boolean enabled)
     {
         isEnabled = enabled;
-        myDatacenterConfig = datacenterConfig;
     }
 
     @JsonProperty("enabled")

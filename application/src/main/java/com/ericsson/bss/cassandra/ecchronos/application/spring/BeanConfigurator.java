@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.ericsson.bss.cassandra.ecchronos.application.ConfigurationException;
+import com.ericsson.bss.cassandra.ecchronos.application.DatacenterNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.DefaultNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.ReflectionUtils;
 import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
@@ -160,28 +161,25 @@ public class BeanConfigurator
             Object[] constructorArgs;
             if (DefaultNativeConnectionProvider.class.equals(providerClass))
             {
-                if (datacenterAware)
-                {
-                    constructorArgs = new Object[] {
-                        configuration,
-                        securitySupplier,
-                        certificateHandler,
-                        defaultRepairConfigurationProvider,
-                        meterRegistry,
-                        datacenterAwareConfig,
-                        statementDecorator
-                    };
-                }
-                else
-                {
-                    constructorArgs = new Object[] {
-                        configuration,
-                        securitySupplier,
-                        certificateHandler,
-                        defaultRepairConfigurationProvider,
-                        meterRegistry
-                    };
-                }
+                constructorArgs = new Object[] {
+                    configuration,
+                    securitySupplier,
+                    certificateHandler,
+                    defaultRepairConfigurationProvider,
+                    meterRegistry
+                };
+            }
+            else if (DatacenterNativeConnectionProvider.class.equals(providerClass) & datacenterAware)
+            {
+                constructorArgs = new Object[] {
+                    configuration,
+                    securitySupplier,
+                    certificateHandler,
+                    defaultRepairConfigurationProvider,
+                    meterRegistry,
+                    datacenterAwareConfig,
+                    statementDecorator
+                };
             }
             else
             {
@@ -199,7 +197,6 @@ public class BeanConfigurator
                     providerClass,
                     getConstructorParameterTypes(providerClass, datacenterAware),
                     constructorArgs);
-
         }
         catch (ConfigurationException ex)
         {
@@ -229,32 +226,31 @@ public class BeanConfigurator
         }
     }
 
-    private static Class<?>[] getConstructorParameterTypes(final Class<?> providerClass, final boolean datacenterAware)
+    private static Class<?>[] getConstructorParameterTypes(
+        final Class<?> providerClass,
+        final boolean datacenterAware)
     {
         if (DefaultNativeConnectionProvider.class.equals(providerClass))
         {
-            if (datacenterAware)
-            {
-                return new Class<?>[] {
-                    Config.class,
-                    Supplier.class,
-                    CertificateHandler.class,
-                    DefaultRepairConfigurationProvider.class,
-                    MeterRegistry.class,
-                    DatacenterAwareConfig.class,
-                    StatementDecorator.class
-                };
-            }
-            else
-            {
-                return new Class<?>[] {
-                    Config.class,
-                    Supplier.class,
-                    CertificateHandler.class,
-                    DefaultRepairConfigurationProvider.class,
-                    MeterRegistry.class
-                };
-            }
+            return new Class<?>[] {
+                Config.class,
+                Supplier.class,
+                CertificateHandler.class,
+                DefaultRepairConfigurationProvider.class,
+                MeterRegistry.class
+            };
+        }
+        else if (DatacenterNativeConnectionProvider.class.equals(providerClass) & datacenterAware)
+        {
+            return new Class<?>[] {
+                Config.class,
+                Supplier.class,
+                CertificateHandler.class,
+                DefaultRepairConfigurationProvider.class,
+                MeterRegistry.class,
+                DatacenterAwareConfig.class,
+                StatementDecorator.class
+            };
         }
         else
         {
@@ -286,12 +282,12 @@ public class BeanConfigurator
     {
         Boolean datacenterAware = configuration
             .getConnectionConfig()
-            .getJmxConnection()
+            .getCqlConnection()
             .getDatacenterAwareConfig().isEnabled();
 
         DatacenterAwareConfig datacenterAwareConfig = configuration
             .getConnectionConfig()
-            .getJmxConnection()
+            .getCqlConnection()
             .getDatacenterAwareConfig();
         if (datacenterAware)
         {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Telefonaktiebolaget LM Ericsson
+ * Copyright 2024 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,28 @@ import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
-import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
-import com.datastax.oss.driver.internal.core.loadbalancing.DcInferringLoadBalancingPolicy;
 import com.ericsson.bss.cassandra.ecchronos.connection.DataCenterAwarePolicy;
 import com.ericsson.bss.cassandra.ecchronos.connection.NativeConnectionProvider;
-import com.ericsson.bss.cassandra.ecchronos.connection.impl.common.InitialContact;
 import com.google.common.collect.ImmutableList;
 import io.micrometer.core.instrument.MeterRegistry;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-public final class LocalNativeConnectionProvider implements NativeConnectionProvider
+public final class AgentNativeConnectionProvider implements NativeConnectionProvider
 {
     private static final List<String> SCHEMA_REFRESHED_KEYSPACES = ImmutableList.of("/.*/", "!system",
             "!system_distributed", "!system_schema", "!system_traces", "!system_views", "!system_virtual_schema");
-    private static final Logger LOG = LoggerFactory.getLogger(LocalNativeConnectionProvider.class);
     private static final List<String> NODE_METRICS = Arrays.asList(DefaultNodeMetric.OPEN_CONNECTIONS.getPath(),
             DefaultNodeMetric.AVAILABLE_STREAMS.getPath(), DefaultNodeMetric.IN_FLIGHT.getPath(),
             DefaultNodeMetric.ORPHANED_STREAMS.getPath(), DefaultNodeMetric.BYTES_SENT.getPath(),
@@ -67,18 +67,39 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
             DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE.getPath(), DefaultSessionMetric.THROTTLING_DELAY.getPath(),
             DefaultSessionMetric.THROTTLING_QUEUE_SIZE.getPath(), DefaultSessionMetric.THROTTLING_ERRORS.getPath());
 
-    public static final int DEFAULT_NATIVE_PORT = 9042;
-    public static final String DEFAULT_LOCAL_HOST = "localhost";
-
+    private static final Logger LOG = LoggerFactory.getLogger(AgentNativeConnectionProvider.class);
     private final CqlSession mySession;
     private final Node myLocalNode;
     private final boolean myRemoteRouting;
+    private final List<EndPoint> myEndPoints;
+    private final Map<String, Node> myNodes;
 
-    private LocalNativeConnectionProvider(final CqlSession session, final Node node, final boolean remoteRouting)
+    private AgentNativeConnectionProvider(
+        final CqlSession session,
+        final boolean remoteRouting,
+        final Map<String, Node> nodesMap,
+        final List<EndPoint> endPoints)
     {
         mySession = session;
-        myLocalNode = node;
         myRemoteRouting = remoteRouting;
+        myLocalNode = null;
+        myNodes = nodesMap;
+        myEndPoints = endPoints;
+    }
+
+    public List<EndPoint> getEndPoints()
+    {
+        return myEndPoints;
+    }
+
+    public Map<String, Node>  getNodes()
+    {
+        return myNodes;
+    }
+
+    public static Builder builder()
+    {
+        return new Builder();
     }
 
     @Override
@@ -105,17 +126,13 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
         mySession.close();
     }
 
-    public static Builder builder()
-    {
-        return new Builder();
-    }
-
     public static class Builder
     {
         private static final int MAX_NODES_PER_DC = 999;
+        private List<Map<String, String>> myDatacenterList;
+        private List<EndPoint> myEndPoints;
+        private String myLocalDatacenter;
 
-        private String myLocalhost = DEFAULT_LOCAL_HOST;
-        private int myPort = DEFAULT_NATIVE_PORT;
         private boolean myRemoteRouting = true;
         private boolean myIsMetricsEnabled = true;
         private AuthProvider myAuthProvider = null;
@@ -124,15 +141,16 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
         private NodeStateListener myNodeStateListener = null;
         private MeterRegistry myMeterRegistry = null;
 
-        public final Builder withLocalhost(final String localhost)
+        public final Builder withLocalDatacenter(final String datacenterName)
         {
-            myLocalhost = localhost;
+            myLocalDatacenter = datacenterName;
             return this;
         }
 
-        public final Builder withPort(final int port)
+        public final Builder withDatacenterList(final List<Map<String, String>> datacenterList)
         {
-            myPort = port;
+            myDatacenterList = datacenterList;
+            myEndPoints = createEndPointList();
             return this;
         }
 
@@ -144,7 +162,7 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
 
         public final Builder withAuthProvider(final AuthProvider authProvider)
         {
-            this.myAuthProvider = authProvider;
+            myAuthProvider = authProvider;
             return this;
         }
 
@@ -156,13 +174,13 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
 
         public final Builder withSchemaChangeListener(final SchemaChangeListener schemaChangeListener)
         {
-            this.mySchemaChangeListener = schemaChangeListener;
+            mySchemaChangeListener = schemaChangeListener;
             return this;
         }
 
         public final Builder withNodeStateListener(final NodeStateListener nodeStateListener)
         {
-            this.myNodeStateListener = nodeStateListener;
+            myNodeStateListener = nodeStateListener;
             return this;
         }
 
@@ -178,29 +196,17 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
             return this;
         }
 
-        public final LocalNativeConnectionProvider build()
+        public final AgentNativeConnectionProvider build()
         {
             CqlSession session = createSession(this);
-            Node node = resolveLocalhost(session, localEndPoint());
-            return new LocalNativeConnectionProvider(session, node, myRemoteRouting);
+            Map<String, Node> nodesMap = createNodeMap(session);
+            return new AgentNativeConnectionProvider(
+                session, myRemoteRouting, nodesMap, myEndPoints);
         }
 
-        private EndPoint localEndPoint()
+        private CqlSession createSession(final Builder builder)
         {
-            return new ContactEndPoint(myLocalhost, myPort);
-        }
-
-        private static CqlSession createSession(final Builder builder)
-        {
-            EndPoint contactEndPoint = builder.localEndPoint();
-
-            InitialContact initialContact = resolveInitialContact(contactEndPoint, builder);
-
-            LOG.debug("Connecting to {}({}), local data center: {}", contactEndPoint, initialContact.getHostId(),
-                    initialContact.getDataCenter());
-
             CqlSessionBuilder sessionBuilder = fromBuilder(builder);
-            sessionBuilder = sessionBuilder.withLocalDatacenter(initialContact.getDataCenter());
 
             DriverConfigLoader driverConfigLoader = loaderBuilder(builder, sessionBuilder).build();
             LOG.debug("Driver configuration: {}", driverConfigLoader.getInitialConfig().getDefaultProfile().entrySet());
@@ -208,7 +214,55 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
             return sessionBuilder.build();
         }
 
-        private  static ProgrammaticDriverConfigLoaderBuilder loaderBuilder(
+        private List<EndPoint> createEndPointList()
+        {
+            List<EndPoint> endPoints = new ArrayList<>();
+            for (Map<String, String> host : myDatacenterList)
+            {
+                ContactEndPoint endPoint = new ContactEndPoint(host.get("host"), Integer.valueOf(host.get("port")));
+                endPoint.resolve();
+                endPoints.add(endPoint);
+            }
+            return endPoints;
+        }
+
+        private Map<String, Node> createNodeMap(final CqlSession session)
+        {
+            Map<String, Node> nodeMap = new HashMap<>();
+            for (EndPoint endPoint: myEndPoints)
+            {
+                Node node = searchNode(endPoint.toString(), session);
+                if (node != null)
+                {
+                    nodeMap.put(endPoint.toString(), node);
+                }
+                else
+                {
+                    nodeMap.put(endPoint.toString(), null);
+                }
+            }
+            return nodeMap;
+        }
+
+        public final Node searchNode(
+            final String endpoint,
+            final CqlSession session)
+        {
+            Collection<Node> nodeList = session.getMetadata().getNodes().values();
+
+            Node tmpNode = null;
+            for (Node node : nodeList)
+            {
+                if (node.getEndPoint().toString().equals(endpoint))
+                {
+                    tmpNode = node;
+                    return tmpNode;
+                }
+            }
+            return tmpNode;
+        }
+
+        private static ProgrammaticDriverConfigLoaderBuilder loaderBuilder(
             final Builder builder,
             final CqlSessionBuilder sessionBuilder)
         {
@@ -236,50 +290,15 @@ public final class LocalNativeConnectionProvider implements NativeConnectionProv
             return loaderBuilder;
         }
 
-        private static InitialContact resolveInitialContact(final EndPoint contactEndPoint, final Builder builder)
-        {
-            DriverConfigLoader loader = DriverConfigLoader.programmaticBuilder()
-                    .withString(DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
-                            DcInferringLoadBalancingPolicy.class.getName())
-                    .build();
-            CqlSessionBuilder cqlSessionBuilder = fromBuilder(builder).withConfigLoader(loader);
-            try (Session session = cqlSessionBuilder.build())
-            {
-                Optional<Node> node = session.getMetadata().findNode(contactEndPoint);
-                if (node.isPresent())
-                {
-                    return new InitialContact(node.get().getDatacenter(), node.get().getHostId());
-                }
-            }
-            throw new IllegalStateException("Unable to find local data center");
-        }
-
         private static CqlSessionBuilder fromBuilder(final Builder builder)
         {
             return CqlSession.builder()
-                    .addContactEndPoint(builder.localEndPoint())
+                    .addContactEndPoints(builder.myEndPoints)
+                    .withLocalDatacenter(builder.myLocalDatacenter)
                     .withAuthProvider(builder.myAuthProvider)
                     .withSslEngineFactory(builder.mySslEngineFactory)
                     .withSchemaChangeListener(builder.mySchemaChangeListener)
                     .withNodeStateListener(builder.myNodeStateListener);
-        }
-
-        private static Node resolveLocalhost(
-            final Session session,
-            final EndPoint localEndpoint)
-        {
-            Node tmpNode = null;
-            Optional<Node> node = session.getMetadata().findNode(localEndpoint);
-
-            if (node.isPresent())
-            {
-                tmpNode = node.get();
-            }
-            else
-            {
-                throw new IllegalArgumentException("Node " + localEndpoint + " not found among cassandra hosts");
-            }
-            return tmpNode;
         }
     }
 }
