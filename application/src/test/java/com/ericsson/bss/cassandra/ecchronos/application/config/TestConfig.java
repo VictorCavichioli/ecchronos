@@ -160,6 +160,10 @@ public class TestConfig
         assertThat(httpReportingConfig.getExcludedMetrics()).hasSize(1);
         assertThat(httpReportingConfig.getExcludedMetrics()).contains(expectedHttpExcludedMetric);
 
+        assertThat(statisticsConfig.getRepairFailuresTimeWindow().getInterval(TimeUnit.MINUTES)).isEqualTo(5);
+        assertThat(statisticsConfig.getTriggerIntervalForMetricInspection().getInterval(TimeUnit.SECONDS)).isEqualTo(30);
+        assertThat(statisticsConfig.getRepairFailuresCount()).isEqualTo(5);
+
         LockFactoryConfig lockFactoryConfig = config.getLockFactory();
         assertThat(lockFactoryConfig.getCasLockFactoryConfig().getKeyspaceName()).isEqualTo("ecc");
         assertThat(lockFactoryConfig.getCasLockFactoryConfig().getConsistencySerial().equals(ConsistencyType.LOCAL)).isTrue();
@@ -196,7 +200,13 @@ public class TestConfig
         File file = new File(classLoader.getResource("initial_delay_greater_than_repair.yml").getFile());
 
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        assertThatExceptionOfType(JsonMappingException.class).isThrownBy(() -> objectMapper.readValue(file, Config.class));
+        Config config = objectMapper.readValue(file, Config.class);
+        GlobalRepairConfig repair = config.getRepairConfig();
+        Interval repint = repair.getRepairInterval();
+        Interval intdel = repair.getInitialDelay();
+
+        assertThat(repint.getTime()).isEqualTo(intdel.getTime());
+        assertThat(repint.getUnit()).isEqualTo(intdel.getUnit());
     }
 
     @Test
@@ -364,7 +374,11 @@ public class TestConfig
         assertThat(httpReportingConfig.isEnabled()).isTrue();
         assertThat(httpReportingConfig.getExcludedMetrics()).isEmpty();
 
-        LockFactoryConfig lockFactoryConfig = config.getLockFactory();
+        assertThat(statisticsConfig.getRepairFailuresTimeWindow().getInterval(TimeUnit.MINUTES)).isEqualTo(30);
+        assertThat(statisticsConfig.getTriggerIntervalForMetricInspection().getInterval(TimeUnit.SECONDS)).isEqualTo(5);
+        assertThat(statisticsConfig.getRepairFailuresCount()).isEqualTo(5);
+
+       LockFactoryConfig lockFactoryConfig = config.getLockFactory();
         assertThat(lockFactoryConfig.getCasLockFactoryConfig().getKeyspaceName()).isEqualTo("ecchronos");
         assertThat(lockFactoryConfig.getCasLockFactoryConfig().getConsistencySerial().equals(ConsistencyType.DEFAULT)).isTrue();
 
@@ -402,7 +416,7 @@ public class TestConfig
     }
 
     @Test
-    public void testStatisticsDisabledIfNoReporting() throws Exception
+    public void testStatisticsEnabledIfNoReporting() throws Exception
     {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         File file = new File(classLoader.getResource("all_reporting_disabled.yml").getFile());
@@ -415,7 +429,18 @@ public class TestConfig
         assertThat(statisticsConfig.getReportingConfigs().isJmxReportingEnabled()).isFalse();
         assertThat(statisticsConfig.getReportingConfigs().isFileReportingEnabled()).isFalse();
         assertThat(statisticsConfig.getReportingConfigs().isHttpReportingEnabled()).isFalse();
-        assertThat(statisticsConfig.isEnabled()).isFalse();
+        assertThat(statisticsConfig.isEnabled()).isTrue();
+    }
+
+    @Test
+    public void testTriggerIntervalBiggerThanRepairFailuresWindow()
+    {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        File file = new File(classLoader.getResource("trigger_interval_bigger_than_repair_failures_window.yml").getFile());
+
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+
+        assertThatExceptionOfType(JsonMappingException.class).isThrownBy(() -> objectMapper.readValue(file, Config.class));
     }
 
     public static class TestNativeConnectionProvider implements NativeConnectionProvider

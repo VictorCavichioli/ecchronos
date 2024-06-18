@@ -1,6 +1,15 @@
 # Changes
+## Version 5.0.5
+
+* Metric status logger for troubleshooting - Issue #397
+
+## Version 5.0.4
+
+* ecChronos will break if repair interval is shorter than the initial delay - Issue #667
+
 ## Version 5.0.3
 
+* Spring Framework URL Parsing with Host Validation is vulnerable - Issue #661
 * Possibility for repairs to never be triggered - Issue #264
  
 ## Version 5.0.2
