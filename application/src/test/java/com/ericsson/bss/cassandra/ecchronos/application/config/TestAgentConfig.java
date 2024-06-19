@@ -14,6 +14,7 @@
  */
 package com.ericsson.bss.cassandra.ecchronos.application.config;
 
+import com.ericsson.bss.cassandra.ecchronos.application.DatacenterNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.config.connection.ConnectionConfig;
 import com.ericsson.bss.cassandra.ecchronos.application.config.connection.NativeConnection;
 
@@ -76,5 +77,12 @@ public class TestAgentConfig
         assertThat(nativeConnection
                 .getDatacenterAwareConfig()
                 .getDatacenterConfig().get("datacenter2").getHosts().size()).isEqualTo(2);
+    }
+
+    @Test
+    public void testEnableDatacenterAware() throws Exception
+    {
+        assertThat(nativeConnection.getDatacenterAwareConfig().isEnabled()).isTrue();
+        assertThat(nativeConnection.getProviderClass()).isEqualTo(DatacenterNativeConnectionProvider.class);
     }
 }
