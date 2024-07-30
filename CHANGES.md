@@ -1,6 +1,9 @@
 # Changes
 ## Version 6.0.0
 
+* Expose AgentJMXConnectionProvider on Connection and Application Module - Issue #676
+* Create JMXAgentConfig to add Hosts in JMX Session Through - Issue ecc.yml #675
+* Create EccNodesSync Object to Represent Table nodes_sync - Issue #672
 * Expose AgentNativeConnectionProvider on Connection and Application Module - Issue #673
 * Create DatacenterAwareConfig to add Hosts in CQL Session Through ecc.yml - Issue #671
 

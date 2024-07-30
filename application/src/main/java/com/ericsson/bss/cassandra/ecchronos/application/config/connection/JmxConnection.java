@@ -14,21 +14,32 @@
  */
 package com.ericsson.bss.cassandra.ecchronos.application.config.connection;
 
+import com.ericsson.bss.cassandra.ecchronos.application.AgentJmxConnectionProvider;
+import com.ericsson.bss.cassandra.ecchronos.application.AgentNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.DefaultJmxConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import com.ericsson.bss.cassandra.ecchronos.connection.JmxConnectionProvider;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.function.Supplier;
 
 public class JmxConnection extends Connection<JmxConnectionProvider>
 {
     private static final int DEFAULT_PORT = 7199;
+    private JMXAgentConfig myJmxAgentConfig = new JMXAgentConfig();
 
     public JmxConnection()
     {
         try
         {
-            setProvider(DefaultJmxConnectionProvider.class);
+            if (myJmxAgentConfig.isAgentEnabled())
+            {
+                setProvider(AgentJmxConnectionProvider.class);
+            }
+            else
+            {
+                setProvider(DefaultJmxConnectionProvider.class);
+            }
             setPort(DEFAULT_PORT);
         }
         catch (NoSuchMethodException ignored)
@@ -37,9 +48,30 @@ public class JmxConnection extends Connection<JmxConnectionProvider>
         }
     }
 
+    @JsonProperty("agent")
+    public final JMXAgentConfig getJMXAgentConfig()
+    {
+        return myJmxAgentConfig;
+    }
+
+    @JsonProperty("agent")
+    public final void setJMXAgentConfig(final JMXAgentConfig jmxAgentConfig)
+    {
+        myJmxAgentConfig = jmxAgentConfig;
+    }
+
     @Override
     protected final Class<?>[] expectedConstructor()
     {
+        if (myJmxAgentConfig.isAgentEnabled())
+        {
+            return new Class<?>[]
+                {
+                        Config.class,
+                        Supplier.class,
+                        AgentNativeConnectionProvider.class
+                };
+        }
         return new Class<?>[]
                 {
                         Config.class, Supplier.class

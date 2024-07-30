@@ -113,6 +113,7 @@ port: 9042
 #
 * remoteRouting: true
 **jmx:**
+* agentEnabled: false
 #
 # Host and port properties for JMX.
 # Primarily used by the default connection provider.

@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
+import com.ericsson.bss.cassandra.ecchronos.application.AgentJmxConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.AgentNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.application.ConfigurationException;
 import com.ericsson.bss.cassandra.ecchronos.application.DefaultNativeConnectionProvider;
@@ -42,6 +43,7 @@ import com.ericsson.bss.cassandra.ecchronos.application.ReflectionUtils;
 import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import com.ericsson.bss.cassandra.ecchronos.application.config.ConfigRefresher;
 import com.ericsson.bss.cassandra.ecchronos.application.config.ConfigurationHelper;
+import com.ericsson.bss.cassandra.ecchronos.application.config.connection.JmxConnection;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.Security;
 import com.ericsson.bss.cassandra.ecchronos.connection.JmxConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.connection.NativeConnectionProvider;
@@ -261,17 +263,40 @@ public class BeanConfigurator
     }
 
     @Bean
-    public JmxConnectionProvider jmxConnectionProvider(final Config config) throws ConfigurationException
+    public JmxConnectionProvider jmxConnectionProvider(
+        final Config config,
+        final NativeConnectionProvider nativeConnectionProvider) throws ConfigurationException
     {
-        return getJmxConnectionProvider(config, jmxSecurity::get);
+        return getJmxConnectionProvider(config, jmxSecurity::get, nativeConnectionProvider);
     }
 
-    private static JmxConnectionProvider getJmxConnectionProvider(final Config configuration,
-                                                                  final Supplier<Security.JmxSecurity> securitySupplier)
+    private static JmxConnectionProvider getJmxConnectionProvider(
+        final Config configuration,
+        final Supplier<Security.JmxSecurity> securitySupplier,
+        final NativeConnectionProvider nativeConnectionProvider)
             throws ConfigurationException
     {
-        return ReflectionUtils
-                .construct(configuration.getConnectionConfig().getJmxConnection().getProviderClass(),
+        JmxConnection jmxConnection = configuration.getConnectionConfig().getJmxConnection();
+        Class<?> providerClass = jmxConnection.getProviderClass();
+        boolean agentEnabled = jmxConnection.getJMXAgentConfig().isAgentEnabled();
+        if (providerClass.equals(AgentJmxConnectionProvider.class) && agentEnabled)
+        {
+            AgentNativeConnectionProvider agent = (AgentNativeConnectionProvider) nativeConnectionProvider;
+            LOG.info("Using {} as default JMXConfig", providerClass);
+            return (JmxConnectionProvider) ReflectionUtils
+                .construct(providerClass,
+                        new Class<?>[] {
+                                Config.class,
+                                Supplier.class,
+                                AgentNativeConnectionProvider.class
+                        },
+                        configuration,
+                        securitySupplier,
+                        agent);
+        }
+        LOG.info("Using {} as default JMXConfig", providerClass);
+        return (JmxConnectionProvider) ReflectionUtils
+                .construct(providerClass,
                         new Class<?>[] {
                                 Config.class, Supplier.class
                         },
