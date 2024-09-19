@@ -18,6 +18,7 @@ import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import com.ericsson.bss.cassandra.ecchronos.application.providers.AgentNativeConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.connection.CertificateHandler;
 import com.ericsson.bss.cassandra.ecchronos.connection.DistributedNativeConnectionProvider;
+import com.ericsson.bss.cassandra.ecchronos.core.impl.repair.DefaultRepairConfigurationProvider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.function.Supplier;
@@ -60,7 +61,8 @@ public class DistributedNativeConnection extends Connection<DistributedNativeCon
                 {
                         Config.class,
                         Supplier.class,
-                        CertificateHandler.class
+                        CertificateHandler.class,
+                        DefaultRepairConfigurationProvider.class
                 };
     }
 }

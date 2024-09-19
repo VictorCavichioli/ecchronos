@@ -14,10 +14,16 @@
  */
 package com.ericsson.bss.cassandra.ecchronos.application.spring;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.CqlTLSConfig;
 import com.ericsson.bss.cassandra.ecchronos.application.config.security.ReloadingCertificateHandler;
 import com.ericsson.bss.cassandra.ecchronos.application.providers.AgentJmxConnectionProvider;
 import com.ericsson.bss.cassandra.ecchronos.connection.DistributedJmxConnectionProvider;
+import com.ericsson.bss.cassandra.ecchronos.core.impl.metadata.NodeResolverImpl;
+import com.ericsson.bss.cassandra.ecchronos.core.impl.repair.DefaultRepairConfigurationProvider;
+import com.ericsson.bss.cassandra.ecchronos.core.impl.state.ReplicationStateImpl;
+import com.ericsson.bss.cassandra.ecchronos.core.metadata.NodeResolver;
+import com.ericsson.bss.cassandra.ecchronos.core.state.ReplicationState;
 import com.ericsson.bss.cassandra.ecchronos.data.exceptions.EcChronosException;
 import com.ericsson.bss.cassandra.ecchronos.data.sync.EccNodesSync;
 
@@ -136,6 +142,17 @@ public class BeanConfigurator
     }
 
     /**
+     * Provides a {@link DefaultRepairConfigurationProvider} bean.
+     *
+     * @return a {@link DefaultRepairConfigurationProvider} object.
+     */
+    @Bean
+    public DefaultRepairConfigurationProvider defaultRepairConfigurationProvider()
+    {
+        return new DefaultRepairConfigurationProvider();
+    }
+
+    /**
      * Configures the embedded web server factory with the host and port specified in the application configuration.
      *
      * @param config
@@ -162,10 +179,11 @@ public class BeanConfigurator
      */
     @Bean
     public DistributedNativeConnectionProvider distributedNativeConnectionProvider(
-            final Config config
+            final Config config,
+            final DefaultRepairConfigurationProvider defaultRepairConfigurationProvider
     )
     {
-        return getDistributedNativeConnection(config, cqlSecurity::get);
+        return getDistributedNativeConnection(config, cqlSecurity::get, defaultRepairConfigurationProvider);
     }
 
     /**
@@ -208,6 +226,22 @@ public class BeanConfigurator
                 jmxSecurity::get, distributedNativeConnectionProvider, eccNodesSync);
     }
 
+    @Bean
+    public NodeResolver nodeResolver(final DistributedNativeConnectionProvider distributedNativeConnectionProvider)
+    {
+        CqlSession session = distributedNativeConnectionProvider.getCqlSession();
+        return new NodeResolverImpl(session);
+    }
+
+    @Bean
+    public ReplicationState replicationState(
+            final DistributedNativeConnectionProvider distributedNativeConnectionProvider,
+            final NodeResolver nodeResolver)
+    {
+        CqlSession session = distributedNativeConnectionProvider.getCqlSession();
+        return new ReplicationStateImpl(nodeResolver, session);
+    }
+
     private Security getSecurityConfig() throws ConfigurationException
     {
         return ConfigurationHelper.DEFAULT_INSTANCE.getConfiguration(SECURITY_FILE, Security.class);
@@ -220,12 +254,17 @@ public class BeanConfigurator
 
     private DistributedNativeConnectionProvider getDistributedNativeConnection(
             final Config config,
-            final Supplier<Security.CqlSecurity> securitySupplier
+            final Supplier<Security.CqlSecurity> securitySupplier,
+            final DefaultRepairConfigurationProvider defaultRepairConfigurationProvider
     )
     {
         Supplier<CqlTLSConfig> tlsSupplier = () -> securitySupplier.get().getCqlTlsConfig();
         CertificateHandler certificateHandler = createCertificateHandler(tlsSupplier);
-        return new AgentNativeConnectionProvider(config, securitySupplier, certificateHandler);
+        return new AgentNativeConnectionProvider(
+                config,
+                securitySupplier,
+                certificateHandler,
+                defaultRepairConfigurationProvider);
     }
 
     private DistributedJmxConnectionProvider getDistributedJmxConnection(

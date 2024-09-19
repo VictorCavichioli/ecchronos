@@ -152,7 +152,7 @@ public class DistributedJmxBuilder
         }
     }
 
-    private void reconnect(final Node node) throws IOException, EcChronosException
+    private void reconnect(final Node node) throws EcChronosException
     {
         try
         {
