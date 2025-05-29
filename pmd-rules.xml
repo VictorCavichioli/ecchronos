@@ -25,7 +25,8 @@
     <rule ref="category/java/design.xml">
         <exclude name="TooManyMethods" />
         <exclude name="LawOfDemeter" />
-        <exclude name="AvoidCatchingGenericException" /> <!-- Should consider fixing this -->
+	<exclude name="AvoidCatchingGenericException" /> <!-- Should consider fixing this -->
+	<exclude name="AvoidDeeplyNestedIfStmts" />
         <exclude name="LoosePackageCoupling" />
         <exclude name="DataClass" />
         <exclude name="ExcessiveImports" />
@@ -33,20 +34,33 @@
     </rule>
 
     <rule ref="category/java/bestpractices.xml">
+        <exclude name="GuardLogStatement" />
+        <exclude name="UseVarargs" />
     </rule>
 
     <rule ref="category/java/errorprone.xml">
-        <exclude name="BeanMembersShouldSerialize" />
-        <exclude name="DataflowAnomalyAnalysis" />
         <exclude name="AvoidBranchingStatementAsLastInLoop" />
         <exclude name="AvoidFieldNameMatchingMethodName" />
-        <exclude name="CloseResource" />
+	<exclude name="CloseResource" />
+	<exclude name="DoNotTerminateVM" />
     </rule>
 
     <!-- Skip avoidDuplicateLiterals for annotations -->
     <rule ref="category/java/errorprone.xml/AvoidDuplicateLiterals">
         <properties>
             <property name="skipAnnotations" value="true" />
+        </properties>
+    </rule>
+
+    <!-- increase threshold -->
+    <rule ref="category/java/design.xml/CouplingBetweenObjects">
+        <properties>
+            <property name="threshold" value="50" />
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <property name="reportLevel" value="30" />
         </properties>
     </rule>
 </ruleset>

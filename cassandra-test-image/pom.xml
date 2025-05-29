@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecchronos</groupId>
         <artifactId>parent</artifactId>
-        <version>5.0.5-SNAPSHOT</version>
+        <version>6.0.6-SNAPSHOT</version>
     </parent>
     <artifactId>cassandra-test-image</artifactId>
     <description>Test image for integration tests using Apache Cassandra</description>
@@ -29,16 +29,17 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
+                <artifactId>maven-install-plugin</artifactId>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
 
             <plugin>
-                <artifactId>maven-install-plugin</artifactId>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
                 <configuration>
-                    <skip>true</skip>
+                    <excludeArtifacts>cassandra-test-image</excludeArtifacts>
                 </configuration>
             </plugin>
         </plugins>

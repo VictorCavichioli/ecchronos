@@ -220,7 +220,7 @@ public abstract class RepairTask implements NotificationListener
     @Override
     public void handleNotification(final Notification notification, final Object handback)
     {
-        LOG.debug("Notification {}", notification.toString());
+        LOG.debug("Processing notification {}", notification.toString());
         switch (notification.getType())
         {
         case "progress":
@@ -248,7 +248,7 @@ public abstract class RepairTask implements NotificationListener
             myLatch.countDown();
             break;
         default:
-            LOG.debug("Unknown JMXConnectionNotification type: {}", notification.getType());
+            LOG.warn("Unknown JMXConnectionNotification type: {}", notification.getType());
             break;
         }
     }
@@ -363,7 +363,7 @@ public abstract class RepairTask implements NotificationListener
         NOTIFICATION
     }
 
-    private class HangPreventingTask implements Runnable
+    private final class HangPreventingTask implements Runnable
     {
         private static final int MAX_CHECKS = 3;
         private static final String NORMAL_STATUS = "NORMAL";
@@ -399,7 +399,7 @@ public abstract class RepairTask implements NotificationListener
             }
             catch (IOException e)
             {
-                LOG.error("Unable to check node status or prevent hanging repair task: {}", this, e);
+                LOG.error("Unable to check node status or prevent hanging repair task {}", this, e);
             }
         }
     }

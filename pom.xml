@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2018 Telefonaktiebolaget LM Ericsson
+    Copyright 2024 Telefonaktiebolaget LM Ericsson
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@
 
     <groupId>com.ericsson.bss.cassandra.ecchronos</groupId>
     <artifactId>parent</artifactId>
-    <version>5.0.5-SNAPSHOT</version>
+    <version>6.0.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Ericsson Cassandra Chronos</name>
-    <description>
-        A distributed repair scheduler for Apache Cassandra.
-    </description>
+    <description>A distributed repair scheduler for Apache Cassandra.</description>
     <url>https://github.com/ericsson/ecchronos</url>
 
     <licenses>
@@ -39,107 +37,139 @@
     <modules>
         <module>fm</module>
         <module>core</module>
-        <module>core.osgi</module>
         <module>connection</module>
         <module>connection.impl</module>
         <module>fm.impl</module>
         <module>rest</module>
-        <module>rest.osgi</module>
         <module>application</module>
         <module>cassandra-test-image</module>
         <module>ecchronos-binary</module>
-        <module>karaf-feature</module>
-        <module>osgi-integration</module>
         <module>standalone-integration</module>
     </modules>
 
     <properties>
+
         <bundle.symbolicName>${project.groupId}.${project.artifactId}</bundle.symbolicName>
         <bundle.namespace>${project.groupId}.${project.artifactId}</bundle.namespace>
-
-        <!-- Dependency versions -->
-        <io.netty.version>4.1.94.Final</io.netty.version>
-        <io.micrometer.version>1.9.16</io.micrometer.version>
-        <io.dropwizard.metrics.version>4.2.21</io.dropwizard.metrics.version>
-        <cassandra.driver.core.version>4.17.0</cassandra.driver.core.version>
-        <guava.version>32.0.1-jre</guava.version>
-        <caffeine.version>3.1.8</caffeine.version>
-        <failureaccess.version>1.0.1</failureaccess.version>
-        <cassandra.driver.protocol.version>1.5.0</cassandra.driver.protocol.version>
-        <cassandra.driver.shaded.guava.version>25.1-jre</cassandra.driver.shaded.guava.version>
-        <com.typesafe.config.version>1.4.2</com.typesafe.config.version>
-        <org.hdrhistogram.version>2.1.12</org.hdrhistogram.version>
-        <slf4j.version>1.7.30</slf4j.version>
-        <logback.version>1.2.13</logback.version>
-        <cassandra.version>4.0.10</cassandra.version>
-        <osgi.version>1.3.0</osgi.version>
-        <mockito.core.version>3.3.3</mockito.core.version>
-        <assertj.version>3.16.1</assertj.version>
-        <junit.version>5.7.0</junit.version>
-        <org.apache.commons.io.version>2.7</org.apache.commons.io.version>
-        <com.fasterxml.jackson.core.version>2.15.2</com.fasterxml.jackson.core.version>
-        <com.fasterxml.jackson.dataformat.version>2.15.2</com.fasterxml.jackson.dataformat.version>
-        <org.yaml.snakeyaml.version>1.33</org.yaml.snakeyaml.version>
-
-        <pax-exam.version>4.13.4</pax-exam.version>
-        <pax-logging-logback.version>1.8.4</pax-logging-logback.version>
-        <apache.karaf.version>4.3.8</apache.karaf.version>
-        <org.apache.felix.scr.version>2.1.14</org.apache.felix.scr.version>
-        <pax-url.version>2.4.7</pax-url.version>
-        <javax.inject.version>1</javax.inject.version>
-        <awaitility.version>3.0.0</awaitility.version>
-        <jcip.version>1.0</jcip.version>
-        <junitparams.version>1.1.1</junitparams.version>
-        <equalsverifier.version>3.5</equalsverifier.version>
-        <tomcat.version>9.0.86</tomcat.version>
-        <org.springframework.boot.version>2.7.18</org.springframework.boot.version>
-        <org.springdoc.openapi-ui.version>1.7.0</org.springdoc.openapi-ui.version>
-        <io.prometheus.simpleclient>0.16.0</io.prometheus.simpleclient>
-        <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
-        <swagger-annotations.version>2.2.11</swagger-annotations.version>
-        <org.springframework.web.version>5.3.34</org.springframework.web.version>
-
-        <!-- Plugin versions -->
-        <org.apache.maven.plugins.maven-compiler-plugin.version>3.8.0</org.apache.maven.plugins.maven-compiler-plugin.version>
-        <org.apache.maven.plugins.maven-install-plugin.version>2.5.2</org.apache.maven.plugins.maven-install-plugin.version>
-        <org.apache.maven.plugins.maven-surefire-plugin.version>2.22.1</org.apache.maven.plugins.maven-surefire-plugin.version>
-        <org.apache.maven.plugins.maven-failsafe-plugin.version>2.22.1</org.apache.maven.plugins.maven-failsafe-plugin.version>
-        <org.apache.maven.plugins.maven-assembly-plugin.version>3.6.0</org.apache.maven.plugins.maven-assembly-plugin.version>
-        <org.apache.maven.plugins-maven-checkstyle-plugin.version>3.2.0</org.apache.maven.plugins-maven-checkstyle-plugin.version>
-        <org.apache.maven.plugins-maven-pmd-plugin.version>3.14.0</org.apache.maven.plugins-maven-pmd-plugin.version>
-        <org.apache.maven.plugin.maven-jxr-plugin.version>3.0.0</org.apache.maven.plugin.maven-jxr-plugin.version>
-        <org.apache.maven.plugins-maven-resources-plugin.version>3.1.0</org.apache.maven.plugins-maven-resources-plugin.version>
-        <org.apache.maven.plugins-maven-dependency-plugin.version>3.5.0</org.apache.maven.plugins-maven-dependency-plugin.version>
-        <org.apache.maven.plugins-maven-jar-plugin.version>2.6</org.apache.maven.plugins-maven-jar-plugin.version>
-        <org.apache.maven.plugins-maven-shade-plugin.version>3.4.1</org.apache.maven.plugins-maven-shade-plugin.version>
-        <org.apache.felix.maven-bundle-plugin.version>5.1.8</org.apache.felix.maven-bundle-plugin.version>
-        <com.mycila.license-maven-plugin.version>3.0</com.mycila.license-maven-plugin.version>
-        <io.fabric8.docker-maven-plugin.version>0.35.0</io.fabric8.docker-maven-plugin.version>
-        <org.apache.servicemix.tooling.depends-maven-plugin.version>1.2</org.apache.servicemix.tooling.depends-maven-plugin.version>
-        <org.apache.karaf.tooling.karaf-maven-plugin.version>4.2.1</org.apache.karaf.tooling.karaf-maven-plugin.version>
-        <org.jacoco.jacoco-maven-plugin.version>0.8.4</org.jacoco.jacoco-maven-plugin.version>
-        <org.codehaus.mojo.exec-maven-plugin.version>3.0.0</org.codehaus.mojo.exec-maven-plugin.version>
-        <org.codehaus.mojo.license-maven-plugin.version>1.19</org.codehaus.mojo.license-maven-plugin.version>
-
-        <org.apache.maven.plugins.maven-release-plugin.version>2.5.3</org.apache.maven.plugins.maven-release-plugin.version>
-        <org.apache.maven.plugins.maven-deploy-plugin.version>2.8.2</org.apache.maven.plugins.maven-deploy-plugin.version>
-        <org.apache.maven.plugins.maven-source-plugin.version>3.0.1</org.apache.maven.plugins.maven-source-plugin.version>
-        <org.apache.maven.plugins.maven-javadoc-plugin.version>3.0.1</org.apache.maven.plugins.maven-javadoc-plugin.version>
-        <org.apache.maven.plugins.maven-gpg-plugin.version>1.6</org.apache.maven.plugins.maven-gpg-plugin.version>
-
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- Dependency versions -->
+        <assertj.version>3.27.3</assertj.version>
+        <awaitility.version>4.3.0</awaitility.version>
+        <caffeine.version>3.2.0</caffeine.version>
+        <cassandra.driver.core.version>4.19.0</cassandra.driver.core.version>
+        <com.fasterxml.jackson.core.version>2.19.0</com.fasterxml.jackson.core.version>
+        <com.fasterxml.jackson.dataformat.version>2.19.0</com.fasterxml.jackson.dataformat.version>
+        <com.typesafe.config.version>1.4.3</com.typesafe.config.version>
+        <equalsverifier.version>4.0</equalsverifier.version>
+        <guava.version>33.4.8-jre</guava.version>
+        <io.dropwizard.metrics.version>4.2.32</io.dropwizard.metrics.version>
+        <io.micrometer.version>1.15.0</io.micrometer.version>
+        <io.netty.version>4.1.121.Final</io.netty.version>
+        <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
+        <io.prometheus.client-java.version>1.3.8</io.prometheus.client-java.version>
+        <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
+        <jakarta.validation-api.version>3.1.1</jakarta.validation-api.version>
+        <javax.inject-api.version>2.0.1</javax.inject-api.version>
+        <jcip.version>1.0</jcip.version>
+        <junit.version>5.12.2</junit.version>
+        <junitparams.version>1.1.1</junitparams.version>
+        <logback.version>1.5.18</logback.version>
+        <mockito.core.version>5.18.0</mockito.core.version>
+        <org.apache.commons.io.version>2.19.0</org.apache.commons.io.version>
+        <org.apache.commons.commons-compress.version>1.27.1</org.apache.commons.commons-compress.version>
+        <org.bouncycastle.bcpkix-jdk18on.version>1.80</org.bouncycastle.bcpkix-jdk18on.version>
+        <org.springframework.boot.version>3.5.0</org.springframework.boot.version>
+        <org.yaml.snakeyaml.version>2.4</org.yaml.snakeyaml.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <springdoc.openapi-starter-webmvc-ui.version>2.8.8</springdoc.openapi-starter-webmvc-ui.version>
+        <swagger-annotations.version>2.2.32</swagger-annotations.version>
+        <testcontainers.version>1.21.0</testcontainers.version>
+
+        <!-- Plugin versions -->
+        <com.mycila.license-maven-plugin.version>5.0.0</com.mycila.license-maven-plugin.version>
+        <io.fabric8.docker-maven-plugin.version>0.46.0</io.fabric8.docker-maven-plugin.version>
+        <org.apache.maven.plugin.maven-jxr-plugin.version>3.6.0</org.apache.maven.plugin.maven-jxr-plugin.version>
+        <org.apache.maven.plugins.maven-assembly-plugin.version>3.7.1</org.apache.maven.plugins.maven-assembly-plugin.version>
+        <org.apache.maven.plugins-maven-checkstyle-plugin.version>3.6.0</org.apache.maven.plugins-maven-checkstyle-plugin.version>
+        <org.apache.maven.plugins.maven-compiler-plugin.version>3.14.0</org.apache.maven.plugins.maven-compiler-plugin.version>
+        <org.apache.maven.plugins-maven-dependency-plugin.version>3.8.1</org.apache.maven.plugins-maven-dependency-plugin.version>
+        <org.apache.maven.plugins.maven-deploy-plugin.version>3.1.4</org.apache.maven.plugins.maven-deploy-plugin.version>
+        <org.apache.maven.plugins.maven-failsafe-plugin.version>3.5.3</org.apache.maven.plugins.maven-failsafe-plugin.version>
+        <org.apache.maven.plugins.maven-gpg-plugin.version>3.2.7</org.apache.maven.plugins.maven-gpg-plugin.version>
+        <org.apache.maven.plugins.maven-install-plugin.version>3.1.4</org.apache.maven.plugins.maven-install-plugin.version>
+        <org.apache.maven.plugins-maven-jar-plugin.version>3.4.2</org.apache.maven.plugins-maven-jar-plugin.version>
+        <org.apache.maven.plugins.maven-javadoc-plugin.version>3.11.2</org.apache.maven.plugins.maven-javadoc-plugin.version>
+        <org.apache.maven.plugins-maven-pmd-plugin.version>3.26.0</org.apache.maven.plugins-maven-pmd-plugin.version>
+        <org.apache.maven.plugins.maven-release-plugin.version>3.1.1</org.apache.maven.plugins.maven-release-plugin.version>
+        <org.apache.maven.plugins-maven-resources-plugin.version>3.3.1</org.apache.maven.plugins-maven-resources-plugin.version>
+        <org.apache.maven.plugins-maven-shade-plugin.version>3.6.0</org.apache.maven.plugins-maven-shade-plugin.version>
+        <org.apache.maven.plugins.maven-source-plugin.version>3.3.1</org.apache.maven.plugins.maven-source-plugin.version>
+        <org.apache.maven.plugins.maven-surefire-plugin.version>3.5.3</org.apache.maven.plugins.maven-surefire-plugin.version>
+        <org.apache.servicemix.tooling.depends-maven-plugin.version>1.5.0</org.apache.servicemix.tooling.depends-maven-plugin.version>
+        <org.codehaus.mojo.exec-maven-plugin.version>3.5.0</org.codehaus.mojo.exec-maven-plugin.version>
+        <org.codehaus.mojo.license-maven-plugin.version>2.5.0</org.codehaus.mojo.license-maven-plugin.version>
+        <org.jacoco.jacoco-maven-plugin.version>0.8.13</org.jacoco.jacoco-maven-plugin.version>
+        <org.sonatype.central-central-publishing-maven-plugin>0.7.0</org.sonatype.central-central-publishing-maven-plugin>
+
+        <!-- Test defaults -->
         <skipTests>false</skipTests>
         <skipUTs>${skipTests}</skipUTs>
 
         <!-- Integration tests -->
-        <it.cassandra.memory>1073741824</it.cassandra.memory>
         <it.cassandra.heap>256M</it.cassandra.heap>
-        <it.cassandra.version>4.0</it.cassandra.version>
+        <it.cassandra.memory>1073741824</it.cassandra.memory>
+        <it.cassandra.version>latest</it.cassandra.version>
+
     </properties>
 
     <dependencyManagement>
         <dependencies>
+
+            <!-- Temporary override versions of indirect dependencies (not yet stepped by the direct dependency) -->
+
+            <!-- Used by testcontainers, steped due to CVE-2024-25710 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${org.apache.commons.commons-compress.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- Used by spring-boot-starter-web -->
+            <dependency>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>${jakarta.servlet-api.version}</version>
+            </dependency>
+
+            <!-- Used by java-driver -->
+            <dependency>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+                <version>${com.typesafe.config.version}</version>
+            </dependency>
+
+            <!-- Used by micrometer-registry-prometheus, steped due to conflict with prometheus-metrics-exposition-textformats -->
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-core</artifactId>
+                <version>${io.prometheus.client-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-model</artifactId>
+                <version>${io.prometheus.client-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-config</artifactId>
+                <version>${io.prometheus.client-java.version}</version>
+            </dependency>
+
+            <!-- End of temporary override section -->
+
             <!-- Netty -->
             <dependency>
                 <groupId>io.netty</groupId>
@@ -227,16 +257,25 @@
                 <artifactId>micrometer-core</artifactId>
                 <version>${io.micrometer.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${io.micrometer.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-jmx</artifactId>
                 <version>${io.micrometer.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient</artifactId>
+                <version>${io.prometheus.simpleclient.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
@@ -245,7 +284,7 @@
 
             <!-- Cassandra Driver -->
             <dependency>
-                <groupId>com.datastax.oss</groupId>
+                <groupId>org.apache.cassandra</groupId>
                 <artifactId>java-driver-core</artifactId>
                 <version>${cassandra.driver.core.version}</version>
                 <exclusions>
@@ -275,13 +314,15 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
             <dependency>
-                <groupId>com.datastax.oss</groupId>
+                <groupId>org.apache.cassandra</groupId>
                 <artifactId>java-driver-metrics-micrometer</artifactId>
                 <version>${cassandra.driver.core.version}</version>
             </dependency>
+
             <dependency>
-                <groupId>com.datastax.oss</groupId>
+                <groupId>org.apache.cassandra</groupId>
                 <artifactId>java-driver-query-builder</artifactId>
                 <version>${cassandra.driver.core.version}</version>
                 <exclusions>
@@ -301,40 +342,11 @@
                 <artifactId>caffeine</artifactId>
                 <version>${caffeine.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>failureaccess</artifactId>
-                <version>${failureaccess.version}</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>native-protocol</artifactId>
-                <version>${cassandra.driver.protocol.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-shaded-guava</artifactId>
-                <version>${cassandra.driver.shaded.guava.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.typesafe</groupId>
-                <artifactId>config</artifactId>
-                <version>${com.typesafe.config.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.hdrhistogram</groupId>
-                <artifactId>HdrHistogram</artifactId>
-                <version>${org.hdrhistogram.version}</version>
             </dependency>
 
             <dependency>
@@ -355,32 +367,7 @@
                 <version>${logback.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.apache.cassandra</groupId>
-                <artifactId>cassandra-all</artifactId>
-                <version>${cassandra.version}</version>
-                <scope>test</scope>
-            </dependency>
-
             <!-- Spring boot -->
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-el</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-websocket</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -397,14 +384,8 @@
 
             <dependency>
                 <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-ui</artifactId>
-                <version>${org.springdoc.openapi-ui.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-web</artifactId>
-                <version>${org.springframework.web.version}</version>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.openapi-starter-webmvc-ui.version}</version>
             </dependency>
 
             <!-- OpenAPI annotations -->
@@ -413,6 +394,7 @@
                 <artifactId>jakarta.validation-api</artifactId>
                 <version>${jakarta.validation-api.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-annotations</artifactId>
@@ -421,26 +403,11 @@
 
             <dependency>
                 <groupId>io.prometheus</groupId>
-                <artifactId>simpleclient</artifactId>
-                <version>${io.prometheus.simpleclient}</version>
+                <artifactId>prometheus-metrics-exposition-textformats</artifactId>
+                <version>${io.prometheus.client-java.version}</version>
             </dependency>
 
-            <!-- OSGi -->
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.service.component.annotations</artifactId>
-                <version>${osgi.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.service.metatype.annotations</artifactId>
-                <version>${osgi.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <!-- test -->
+            <!-- Test -->
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
@@ -477,62 +444,24 @@
                 <scope>test</scope>
             </dependency>
 
-            <!-- Pax exam -->
             <dependency>
-                <groupId>org.ops4j.pax.exam</groupId>
-                <artifactId>pax-exam-container-karaf</artifactId>
-                <version>${pax-exam.version}</version>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>cassandra</artifactId>
+                <version>${testcontainers.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
-                <groupId>org.ops4j.pax.exam</groupId>
-                <artifactId>pax-exam-cm</artifactId>
-                <version>${pax-exam.version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.ops4j.pax.exam</groupId>
-                <artifactId>pax-exam-junit4</artifactId>
-                <version>${pax-exam.version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.karaf</groupId>
-                <artifactId>apache-karaf</artifactId>
-                <version>${apache.karaf.version}</version>
-                <scope>test</scope>
-                <type>zip</type>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.karaf.features</groupId>
-                <artifactId>standard</artifactId>
-                <version>${apache.karaf.version}</version>
-                <scope>test</scope>
-                <classifier>features</classifier>
-                <type>xml</type>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.karaf.shell</groupId>
-                <artifactId>org.apache.karaf.shell.core</artifactId>
-                <version>${apache.karaf.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>org.apache.felix.scr</artifactId>
-                <version>${org.apache.felix.scr.version}</version>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${org.bouncycastle.bcpkix-jdk18on.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>javax.inject</groupId>
-                <artifactId>javax.inject</artifactId>
-                <version>${javax.inject.version}</version>
+                <artifactId>javax.inject-api</artifactId>
+                <version>${javax.inject-api.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -614,6 +543,12 @@
                             --add-opens java.base/jdk.internal.module=ALL-UNNAMED
                             --add-opens java.base/jdk.internal.util.jar=ALL-UNNAMED
                             --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED
+                            --add-opens=java.base/java.io=ALL-UNNAMED
+                            --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                            --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                            --add-opens=java.base/java.util=ALL-UNNAMED
+                            --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED
+                            --add-opens=java.base/java.lang=ALL-UNNAMED
                         </argLine>
                     </configuration>
                 </plugin>
@@ -627,8 +562,11 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${org.apache.maven.plugins.maven-compiler-plugin.version}</version>
                     <configuration>
-                        <source>11</source>
-                        <target>11</target>
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
                     </configuration>
                 </plugin>
 
@@ -642,19 +580,8 @@
                     <version>${org.apache.maven.plugins.maven-assembly-plugin.version}</version>
                     <configuration>
                         <skipAssembly>true</skipAssembly>
+                        <tarLongFileMode>posix</tarLongFileMode>
                     </configuration>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.karaf.tooling</groupId>
-                    <artifactId>karaf-maven-plugin</artifactId>
-                    <version>${org.apache.karaf.tooling.karaf-maven-plugin.version}</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <version>${org.apache.felix.maven-bundle-plugin.version}</version>
                 </plugin>
 
                 <plugin>
@@ -702,14 +629,23 @@ limitations under the License.
                         <headerSections>
                             <headerSection>
                                 <key>YEAR</key>
-                                <defaultValue>2019</defaultValue>
+                                <defaultValue>2024</defaultValue>
                                 <ensureMatch>[0-9-]+</ensureMatch>
                             </headerSection>
                         </headerSections>
                         <excludes>
                             <exclude>CODEOWNERS</exclude>
+                            <exclude>.python-version</exclude>
                             <exclude>src/test/resources/cassandra.yaml</exclude>
                             <exclude>src/test/resources/cassandra-rackdc.properties</exclude>
+                            <exclude>**/*.conf</exclude>
+                            <exclude>**/*.attr</exclude>
+                            <exclude>**/*.db</exclude>
+                            <exclude>**/*.srl</exclude>
+                            <exclude>**/*.key</exclude>
+                            <exclude>**/*.crl</exclude>
+                            <exclude>**/*.csr</exclude>
+                            <exclude>**/*.old</exclude>
                             <exclude>**/*.cql</exclude>
                             <exclude>**/*.txt</exclude>
                             <exclude>**/*.p12</exclude>
@@ -749,6 +685,9 @@ limitations under the License.
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>${org.apache.maven.plugins.maven-deploy-plugin.version}</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -792,16 +731,11 @@ limitations under the License.
 
         <plugins>
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${org.apache.maven.plugins-maven-checkstyle-plugin.version}</version>
                 <configuration>
-                    <encoding>UTF-8</encoding>
+                    <inputEncoding>UTF-8</inputEncoding>
                     <consoleOutput>true</consoleOutput>
                     <configLocation>check_style.xml</configLocation>
                     <failOnViolation>true</failOnViolation>
@@ -830,6 +764,23 @@ limitations under the License.
 
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>${org.sonatype.central-central-publishing-maven-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>publish</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <publishingServerId>publisher</publishingServerId>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -1098,47 +1049,55 @@ limitations under the License.
         </plugins>
     </reporting>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <organization>
         <name>Ericsson AB</name>
         <url>http://www.ericsson.com</url>
     </organization>
 
     <developers>
+
         <developer>
-            <name>Marcus Olsson</name>
-            <email>marcus.olsson@ericsson.com</email>
+            <name>Tommy Stendahl</name>
+            <email>tommy.stendahl@ericsson.com</email>
             <organization>Ericsson AB</organization>
             <organizationUrl>http://www.ericsson.com</organizationUrl>
         </developer>
+
         <developer>
-            <name>Per Otterström</name>
-            <email>per.otterstrom@ericsson.com</email>
+            <name>Johan W Andersson</name>
+            <email>johan.w.andersson@ericsson.com</email>
             <organization>Ericsson AB</organization>
             <organizationUrl>http://www.ericsson.com</organizationUrl>
         </developer>
+
         <developer>
-            <name>Jan Karlsson</name>
-            <email>jan.karlsson@ericsson.com</email>
+            <name>Christian Andersson</name>
+            <email>christian.a.andersson@ericsson.com</email>
             <organization>Ericsson AB</organization>
             <organizationUrl>http://www.ericsson.com</organizationUrl>
         </developer>
+
+        <developer>
+            <name>Sajid Riaz</name>
+            <email>sajid.riaz@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+
+        <developer>
+            <name>Victor Cavichioli</name>
+            <email>victor.cavichioli@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+
     </developers>
 
     <scm>
         <url>https://github.com/ericsson/ecchronos</url>
         <connection>scm:git:git@github.com:ericsson/ecchronos.git</connection>
         <developerConnection>scm:git:git@github.com:ericsson/ecchronos.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
+
 </project>

@@ -18,15 +18,13 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.ericsson.bss.cassandra.ecchronos.application.config.Config;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestNoopStatementDecorator
 {
-    @Mock
     private Statement mockStatement;
 
     @Test
@@ -35,4 +33,5 @@ public class TestNoopStatementDecorator
         NoopStatementDecorator noopStatementDecorator = new NoopStatementDecorator(new Config());
         assertThat(noopStatementDecorator.apply(mockStatement)).isEqualTo(mockStatement);
     }
+
 }

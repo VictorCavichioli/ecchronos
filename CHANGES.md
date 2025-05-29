@@ -1,6 +1,46 @@
 # Changes
+
+## Version 6.0.6
+
+* Switch to prometheus-metrics-exposition-textformats due to a licence issue - Issue 972
+
+## Version 6.0.5
+
+* Certificate chains in PEM files not working - Issue #957
+* Possible to filter columns in output - Issue #925
+
+## Version 6.0.4
+
+* CRL not properly applied when using certificate files - Issue #932
+* Return default values if schema changes in Cassandra have not been completed - Issue #922
+
+## Version 6.0.3
+
+* Add CRL support for CQL connections - Issue #880
+
+## Version 6.0.2
+
+* Fail to Initialize ecChronos When statistics.enabled is False - Issue #869
+
+## Version 6.0.1
+
+* Bump dependecies
+
+## Version 6.0.0
+
+* Bump Spring, Tomcat, Java, SnakeYaml, Jackson and various other dependencies - Issues #704, #754
+
 ## Version 5.0.5
 
+* Update dependencies to C* 5.0 - Issue #734
+* Bump org.springframework:spring-web from 5.3.34 to 5.3.39 - Issue #733
+* Bump commons-io:commons-io to 2.17.0 - Issue #732
+* State what versions are maintained - Issue #658
+* Investigate Java 17 - Issue #607
+* RetryPolicy: After failing the last connection attempt, the retry time is still applied - Issue #702
+* Define logging levels formally - Issue #666
+* Deprecate cassandra-all to use testContainers instead - Issue #701
+* Update Mockito and JUnit versions - Issue #687
 * Metric status logger for troubleshooting - Issue #397
 
 ## Version 5.0.4
@@ -24,6 +64,12 @@
 * Improve Description of unwind_ratio - Issue #628
 
 ## Merged from Version 4.0
+
+## Version 4.0.7
+
+* Removes OSGI/Karaf support - Issue #657
+
+## Version 4.0.6
 
 * Separate serial consistency configuration from remoteRouting functionality - Issue #633
 

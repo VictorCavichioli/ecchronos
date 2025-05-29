@@ -108,7 +108,6 @@ public class ECChronosInternals implements Closeable
                     .build();
 
             myTableRepairMetricsImpl = TableRepairMetricsImpl.builder()
-                    .withTableStorageStates(myTableStorageStatesImpl)
                     .withMeterRegistry(meterRegistry)
                     .build();
 
@@ -213,15 +212,16 @@ public class ECChronosInternals implements Closeable
         myCassandraMetrics.close();
     }
 
-    private static class NoOpRepairMetrics implements TableRepairMetrics
+    private static final class NoOpRepairMetrics implements TableRepairMetrics
     {
-
         @Override
         public void repairState(final TableReference tableReference,
                                 final int repairedRanges,
                                 final int notRepairedRanges)
         {
-            LOG.trace("Updated repair state of {}, {}/{} repaired ranges", tableReference, repairedRanges,
+            LOG.trace("Updated repair state of {}, {}/{} repaired ranges",
+                    tableReference,
+                    repairedRanges,
                     notRepairedRanges);
         }
 
@@ -243,15 +243,14 @@ public class ECChronosInternals implements Closeable
                                   final TimeUnit timeUnit,
                                   final boolean successful)
         {
-            if (LOG.isTraceEnabled())
-            {
-                LOG.trace("Repair timing for table {} {}ms, it was {}", tableReference,
-                        timeUnit.toMillis(timeTaken), successful ? "successful" : "not successful");
-            }
+            LOG.trace("Repair timing for table {} {}ms, it was {}successful",
+                    tableReference,
+                    timeUnit.toMillis(timeTaken),
+                    successful ? "" : "not ");
         }
     }
 
-    private static class NoOpTableStorageState implements TableStorageStates
+    private static final class NoOpTableStorageState implements TableStorageStates
     {
         @Override
         public long getDataSize(final TableReference tableReference)

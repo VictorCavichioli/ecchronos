@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -179,7 +179,7 @@ public class TestVnodeOnDemandRepairJob
     {
         LongTokenRange range1 = new LongTokenRange(1, 2);
         LongTokenRange range2 = new LongTokenRange(1, 3);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenRangeToReplicas = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenRangeToReplicas = new HashMap<>();
         tokenRangeToReplicas.put(range1,
                 ImmutableSet.of(mockReplica1, mockReplica2, mockReplica3));
         tokenRangeToReplicas.put(range2,
@@ -211,7 +211,7 @@ public class TestVnodeOnDemandRepairJob
     {
         LongTokenRange range1 = new LongTokenRange(1, 2);
         LongTokenRange range2 = new LongTokenRange(1, 3);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenRangeToReplicas = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenRangeToReplicas = new HashMap<>();
         tokenRangeToReplicas.put(range1,
                 ImmutableSet.of(mockReplica1, mockReplica2, mockReplica3));
         tokenRangeToReplicas.put(range2,

@@ -54,7 +54,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OnDemandRepair'
+                  $ref: "#/components/schemas/OnDemandRepair"
     post:
       tags:
       - Repair-Management
@@ -100,7 +100,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OnDemandRepair'
+                  $ref: "#/components/schemas/OnDemandRepair"
   /repair-management/v2/schedules:
     get:
       tags:
@@ -130,7 +130,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Schedule'
+                  $ref: "#/components/schemas/Schedule"
   /repair-management/v2/schedules/{id}:
     get:
       tags:
@@ -157,7 +157,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Schedule'
+                $ref: "#/components/schemas/Schedule"
+  /repair-management/v2/running-job:
+    get:
+      tags:
+      - Repair-Management
+      operationId: getCurrentJobStatus
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
   /repair-management/v2/repairs/{id}:
     get:
       tags:
@@ -186,7 +198,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OnDemandRepair'
+                  $ref: "#/components/schemas/OnDemandRepair"
   /repair-management/v2/repairInfo:
     get:
       tags:
@@ -239,7 +251,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RepairInfo'
+                $ref: "#/components/schemas/RepairInfo"
   /metrics:
     get:
       tags:
@@ -274,6 +286,12 @@ paths:
             application/openmetrics-text;version=1.0.0;charset=utf-8:
               schema:
                 type: string
+            text/plain; version=0.0.4; charset=utf-8:
+              schema:
+                type: string
+            application/openmetrics-text; version=1.0.0; charset=utf-8:
+              schema:
+                type: string
   /actuator:
     get:
       tags:
@@ -290,21 +308,21 @@ paths:
                 additionalProperties:
                   type: object
                   additionalProperties:
-                    $ref: '#/components/schemas/Link'
+                    $ref: "#/components/schemas/Link"
             application/vnd.spring-boot.actuator.v2+json:
               schema:
                 type: object
                 additionalProperties:
                   type: object
                   additionalProperties:
-                    $ref: '#/components/schemas/Link'
+                    $ref: "#/components/schemas/Link"
             application/json:
               schema:
                 type: object
                 additionalProperties:
                   type: object
                   additionalProperties:
-                    $ref: '#/components/schemas/Link'
+                    $ref: "#/components/schemas/Link"
   /actuator/health:
     get:
       tags:
@@ -324,50 +342,27 @@ paths:
             application/json:
               schema:
                 type: object
-  /actuator/health/**:
-    get:
-      tags:
-      - Actuator
-      summary: Actuator web endpoint 'health-path'
-      operationId: health-path
-      responses:
-        "200":
-          description: OK
-          content:
-            application/vnd.spring-boot.actuator.v3+json:
-              schema:
-                type: object
-            application/vnd.spring-boot.actuator.v2+json:
-              schema:
-                type: object
-            application/json:
-              schema:
-                type: object
 components:
   schemas:
     OnDemandRepair:
-      required:
-      - completedAt
-      - hostId
-      - id
-      - keyspace
-      - repairType
-      - repairedRatio
-      - status
-      - table
       type: object
       properties:
         id:
+          minLength: 1
           type: string
           format: uuid
         hostId:
+          minLength: 1
           type: string
           format: uuid
         keyspace:
+          minLength: 1
           type: string
         table:
+          minLength: 1
           type: string
         status:
+          minLength: 1
           type: string
           enum:
           - COMPLETED
@@ -385,32 +380,27 @@ components:
           type: integer
           format: int64
         repairType:
+          minLength: 1
           type: string
           enum:
           - VNODE
           - PARALLEL_VNODE
           - INCREMENTAL
     Schedule:
-      required:
-      - config
-      - id
-      - keyspace
-      - lastRepairedAtInMs
-      - nextRepairInMs
-      - repairType
-      - repairedRatio
-      - status
-      - table
       type: object
       properties:
         id:
+          minLength: 1
           type: string
           format: uuid
         keyspace:
+          minLength: 1
           type: string
         table:
+          minLength: 1
           type: string
         status:
+          minLength: 1
           type: string
           enum:
           - COMPLETED
@@ -430,8 +420,9 @@ components:
           type: integer
           format: int64
         config:
-          $ref: '#/components/schemas/ScheduleConfig'
+          $ref: "#/components/schemas/ScheduleConfig"
         repairType:
+          minLength: 1
           type: string
           enum:
           - VNODE
@@ -440,14 +431,8 @@ components:
         virtualNodeStates:
           type: array
           items:
-            $ref: '#/components/schemas/VirtualNodeState'
+            $ref: "#/components/schemas/VirtualNodeState"
     ScheduleConfig:
-      required:
-      - errorTimeInMs
-      - intervalInMs
-      - parallelism
-      - unwindRatio
-      - warningTimeInMs
       type: object
       properties:
         intervalInMs:
@@ -467,16 +452,11 @@ components:
           type: integer
           format: int64
         parallelism:
+          minLength: 1
           type: string
           enum:
           - PARALLEL
     VirtualNodeState:
-      required:
-      - endToken
-      - lastRepairedAtInMs
-      - repaired
-      - replicas
-      - startToken
       type: object
       properties:
         startToken:
@@ -499,10 +479,6 @@ components:
         repaired:
           type: boolean
     RepairInfo:
-      required:
-      - repairStats
-      - sinceInMs
-      - toInMs
       type: object
       properties:
         sinceInMs:
@@ -516,18 +492,15 @@ components:
         repairStats:
           type: array
           items:
-            $ref: '#/components/schemas/RepairStats'
+            $ref: "#/components/schemas/RepairStats"
     RepairStats:
-      required:
-      - keyspace
-      - repairTimeTakenMs
-      - repairedRatio
-      - table
       type: object
       properties:
         keyspace:
+          minLength: 1
           type: string
         table:
+          minLength: 1
           type: string
         repairedRatio:
           maximum: 1

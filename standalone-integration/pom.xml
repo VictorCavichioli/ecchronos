@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecchronos</groupId>
         <artifactId>parent</artifactId>
-        <version>5.0.5-SNAPSHOT</version>
+        <version>6.0.6-SNAPSHOT</version>
     </parent>
     <artifactId>standalone-integration</artifactId>
     <description>Integration tests for a standalone environment</description>
@@ -169,16 +169,17 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <generatedSourcesDirectory>${project.build.directory}/generated-sources/</generatedSourcesDirectory>
                 </configuration>
             </plugin>
 
             <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
                 <configuration>
-                    <skip>true</skip>
+                    <excludeArtifacts>standalone-integration</excludeArtifacts>
                 </configuration>
             </plugin>
 

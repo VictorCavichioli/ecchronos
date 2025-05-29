@@ -29,6 +29,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.RuntimeMBeanException;
 import javax.management.openmbean.CompositeData;
 import javax.management.remote.JMXConnector;
 
@@ -41,8 +42,7 @@ import com.ericsson.bss.cassandra.ecchronos.connection.JmxConnectionProvider;
 /**
  * A factory creating JMX proxies to Cassandra.
  */
-@SuppressWarnings("FinalClass")
-public class JmxProxyFactoryImpl implements JmxProxyFactory
+public final class JmxProxyFactoryImpl implements JmxProxyFactory
 {
     private static final Logger LOG = LoggerFactory.getLogger(JmxProxyFactoryImpl.class);
 
@@ -193,7 +193,10 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
                         FORCE_TERMINATE_ALL_REPAIR_SESSIONS_METHOD,
                         null, null);
             }
-            catch (InstanceNotFoundException | MBeanException | ReflectionException | IOException e)
+            catch (InstanceNotFoundException
+                   | MBeanException
+                   | ReflectionException
+                   | IOException e)
             {
                 LOG.error("Unable to terminate repair sessions");
             }
@@ -214,7 +217,9 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
                 myJmxConnector.removeConnectionNotificationListener(listener);
                 myMbeanServerConnection.removeNotificationListener(myStorageServiceObject, listener);
             }
-            catch (InstanceNotFoundException | ListenerNotFoundException | IOException e)
+            catch (InstanceNotFoundException
+                   | ListenerNotFoundException
+                   | IOException e)
             {
                 LOG.error("Unable to remove StorageService listener", e);
             }
@@ -232,21 +237,26 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
         {
             try
             {
-                ObjectName objectName
-                        = new ObjectName(String
+                ObjectName objectName = new ObjectName(String
                         .format("org.apache.cassandra.metrics:type=Table,keyspace=%s,scope=%s,name=LiveDiskSpaceUsed",
                                 tableReference.getKeyspace(), tableReference.getTable()));
 
                 return (Long) myMbeanServerConnection.getAttribute(objectName, "Count");
             }
             catch (AttributeNotFoundException
-                   | InstanceNotFoundException
                    | MBeanException
                    | ReflectionException
                    | IOException
                    | MalformedObjectNameException e)
             {
                 LOG.error("Unable to retrieve disk space usage for {}", tableReference, e);
+            }
+            catch (RuntimeMBeanException
+                   | InstanceNotFoundException e)
+            {
+                // This exception can occur when a table is about to be changed, but has not finished doing so,
+                // before we try to fetch data from it. Just return the default value for the time being.
+                LOG.warn("Unable to retrieve disk space usage for {} (bean not yet ready)", tableReference);
             }
 
             return 0;
@@ -277,9 +287,18 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
                     return maxRepaired;
                 }
             }
-            catch (InstanceNotFoundException | MBeanException | ReflectionException | IOException e)
+            catch (MBeanException
+                   | ReflectionException
+                   | IOException e)
             {
                 LOG.error("Unable to get maxRepaired for {}", tableReference, e);
+            }
+            catch (RuntimeMBeanException
+                   | InstanceNotFoundException e)
+            {
+                // This exception can occur when a table is about to be changed, but has not finished doing so,
+                // before we try to fetch data from it. Just return the default value for the time being.
+                LOG.warn("Unable to get maxRepaired for {} (bean not yet ready)", tableReference);
             }
             return 0;
         }
@@ -289,8 +308,7 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
         {
             try
             {
-                ObjectName objectName
-                        = new ObjectName(String
+                ObjectName objectName = new ObjectName(String
                         .format("org.apache.cassandra.metrics:type=Table,keyspace=%s,scope=%s,name=PercentRepaired",
                                 tableReference.getKeyspace(), tableReference.getTable()));
 
@@ -298,13 +316,19 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
                 return percentRepaired;
             }
             catch (AttributeNotFoundException
-                   | InstanceNotFoundException
                    | MBeanException
                    | ReflectionException
                    | IOException
                    | MalformedObjectNameException e)
             {
-                LOG.error("Unable to retrieve disk space usage for {}", tableReference, e);
+                LOG.error("Unable to retrieve PercentRepaired for {}", tableReference, e);
+            }
+            catch (RuntimeMBeanException
+                   | InstanceNotFoundException e)
+            {
+                // This exception can occur when a table is about to be changed, but has not finished doing so
+                // before we try to fetch data from it. Just return the default value for the time being.
+                LOG.warn("Unable to retrieve PercentRepaired for {} (bean not yet ready)", tableReference);
             }
             return 0.0;
         }
@@ -317,10 +341,10 @@ public class JmxProxyFactoryImpl implements JmxProxyFactory
                 return (String) myMbeanServerConnection.getAttribute(myStorageServiceObject, "OperationMode");
             }
             catch (InstanceNotFoundException
-                    | AttributeNotFoundException
-                    | MBeanException
-                    | ReflectionException
-                    | IOException e)
+                   | AttributeNotFoundException
+                   | MBeanException
+                   | ReflectionException
+                   | IOException e)
             {
                 LOG.error("Unable to retrieve node status {}", e.getMessage());
                 return "Unknown";

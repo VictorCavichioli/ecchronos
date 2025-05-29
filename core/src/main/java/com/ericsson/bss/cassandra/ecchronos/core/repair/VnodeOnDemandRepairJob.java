@@ -28,7 +28,6 @@ import com.ericsson.bss.cassandra.ecchronos.core.scheduling.ScheduledTask;
 import com.ericsson.bss.cassandra.ecchronos.core.utils.DriverNode;
 import com.ericsson.bss.cassandra.ecchronos.core.utils.LongTokenRange;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,12 +66,12 @@ public final class VnodeOnDemandRepairJob extends OnDemandRepairJob
     }
 
     private Map<ScheduledTask, Set<LongTokenRange>> createRepairTasks(
-            final Map<LongTokenRange, ImmutableSet<DriverNode>> tokenRanges,
+            final Map<LongTokenRange, Set<DriverNode>> tokenRanges,
             final Set<LongTokenRange> repairedTokens)
     {
         Map<ScheduledTask, Set<LongTokenRange>> taskMap = new ConcurrentHashMap<>();
         List<VnodeRepairState> vnodeRepairStates = new ArrayList<>();
-        Map<LongTokenRange, ImmutableSet<DriverNode>> remainingTokenRanges;
+        Map<LongTokenRange, Set<DriverNode>> remainingTokenRanges;
 
         if (repairedTokens.isEmpty())
         {
@@ -84,10 +83,10 @@ public final class VnodeOnDemandRepairJob extends OnDemandRepairJob
             repairedTokens.iterator().forEachRemaining(remainingTokenRanges::remove);
         }
 
-        for (Map.Entry<LongTokenRange, ImmutableSet<DriverNode>> entry : remainingTokenRanges.entrySet())
+        for (Map.Entry<LongTokenRange, Set<DriverNode>> entry : remainingTokenRanges.entrySet())
         {
             LongTokenRange longTokenRange = entry.getKey();
-            ImmutableSet<DriverNode> replicas = entry.getValue();
+            Set<DriverNode> replicas = entry.getValue();
             vnodeRepairStates.add(new VnodeRepairState(longTokenRange, replicas, -1));
         }
 
@@ -157,13 +156,13 @@ public final class VnodeOnDemandRepairJob extends OnDemandRepairJob
         if (myTasks.isEmpty())
         {
             getOngoingJob().finishJob();
-            LOG.info("Completed On Demand Repair: {}", id);
+            LOG.info("Completed on demand repair: {}", id);
         }
 
         if (hasFailed())
         {
             getOngoingJob().failJob();
-            LOG.error("Failed On Demand Repair: {}", id);
+            LOG.error("Failed on demand repair: {}", id);
         }
         super.finishJob();
     }
@@ -178,7 +177,7 @@ public final class VnodeOnDemandRepairJob extends OnDemandRepairJob
         }
         if (getOngoingJob().hasTopologyChanged())
         {
-            LOG.error("Repair job with id {} failed, token Ranges have changed since repair has was triggered",
+            LOG.error("Repair job with id {} failed. Token ranges have changed since repair has was triggered",
                     getId());
             setFailed(true);
             return ScheduledJob.State.FAILED;

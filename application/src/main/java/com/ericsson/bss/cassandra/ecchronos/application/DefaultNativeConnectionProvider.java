@@ -55,7 +55,10 @@ public class DefaultNativeConnectionProvider implements NativeConnectionProvider
         Security.CqlSecurity cqlSecurity = cqlSecuritySupplier.get();
         boolean authEnabled = cqlSecurity.getCqlCredentials().isEnabled();
         boolean tlsEnabled = cqlSecurity.getCqlTlsConfig().isEnabled();
-        LOG.info("Connecting through CQL using {}:{}, authentication: {}, tls: {}", host, port, authEnabled,
+        LOG.info("Connecting through CQL using {}:{}, authentication: {}, tls: {}",
+                host,
+                port,
+                authEnabled,
                 tlsEnabled);
         AuthProvider authProvider = null;
         if (authEnabled)
@@ -137,7 +140,7 @@ public class DefaultNativeConnectionProvider implements NativeConnectionProvider
         final int port,
         final long timeout)
     {
-        LOG.warn("Unable to connect through CQL using {}:{}, retrying.", host, port);
+        LOG.warn("Unable to connect through CQL using {}:{}.", host, port);
         long delay = retryPolicy.currentDelay(attempt);
         long currentTime = System.currentTimeMillis();
         long endTime = currentTime + timeout;
@@ -145,18 +148,27 @@ public class DefaultNativeConnectionProvider implements NativeConnectionProvider
         {
             delay = timeout;
         }
-        LOG.warn("Connection failed in attempt {} of {}. Retrying in {} seconds.",
-        attempt, retryPolicy.getMaxAttempts(), TimeUnit.MILLISECONDS.toSeconds(delay));
-        try
+
+        if (attempt == retryPolicy.getMaxAttempts())
         {
-            Thread.sleep(delay);
+            LOG.error("All connection attempts failed ({} were made)!", attempt);
         }
-        catch (InterruptedException e1)
+        else
         {
-            LOG.error(
-                "InterruptedException caught during the delay time, while trying to reconnect to Cassandra. Reason: ",
-                e1);
+            LOG.warn("Connection attempt {} of {} failed. Retrying in {} seconds.",
+                    attempt,
+                    retryPolicy.getMaxAttempts(),
+                    TimeUnit.MILLISECONDS.toSeconds(delay));
+            try
+            {
+                Thread.sleep(delay);
+            }
+            catch (InterruptedException ie)
+            {
+                LOG.error("Exception caught during the delay time, while trying to reconnect to Cassandra.", ie);
+            }
         }
+
     }
 
     @Override

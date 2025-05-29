@@ -21,11 +21,14 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.CertIOException;
+import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509ExtensionUtils;
+import org.bouncycastle.cert.X509v2CRLBuilder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
@@ -71,9 +74,9 @@ public class CertUtils
 {
     public static final String RSA_ALGORITHM_NAME = "RSA";
     public static final String EC_ALGORITHM_NAME = "ECDSA";
-    //When changing keysize make sure you know what you are doing.
-    //Too big keysize will slow keypair generation by ALOT.
-    //2048 for RSA is not secure enough in real world, but since this is only for tests it's perfectly fine.
+    // When changing key sizes, make sure you know what you are doing.
+    // Too big key sizes will slow down key pair generation by A LOT.
+    // 2048 for RSA is not secure enough in the real world, but since this is only for tests it's perfectly fine.
     private static final int RSA_KEY_SIZE = 2048;
     private static final int EC_KEY_SIZE = 384;
     private static final int PEM_ENCODED_LINE_LENGTH = 64;
@@ -117,8 +120,8 @@ public class CertUtils
             X509Certificate caCertificate = getCertificate(Paths.get(caCertificateFile).toFile());
             PublicKey caPublicKey = caCertificate.getPublicKey();
             X509Certificate certificate = generate(getHashAlgorithm(caAlgorithm), keyPair.getPublic(), caPrivateKey,
-                    caPublicKey, commonName, caCertificate.getSubjectDN().getName().replace("CN=", ""), notBefore,
-                    notAfter, false);
+                    caPublicKey, commonName, caCertificate.getSubjectDN().getName().replace("CN=", ""),
+                    notBefore, notAfter, false);
 
             storeCertificate(certificate, Paths.get(certificateOutputFile));
             storePrivateKey(keyPair.getPrivate(), Paths.get(privateKeyOutputFile));
@@ -342,4 +345,65 @@ public class CertUtils
         Files.write(file,
                 BEGIN_PRIVATE_KEY.concat(encodedPrivateKey).concat(END_PRIVATE_KEY).getBytes(StandardCharsets.UTF_8));
     }
+
+    /**
+     * Create a CRL file using the provided CA certificate and private key.
+     *
+     * @param caCertFile Path to the CA certificate file in PEM format.
+     * @param caKeyFile  Path to the CA private key file in PEM format.
+     * @param crlFile    The output file where the CRL will be stored.
+     * @param revoke     If true, a revoked certificate will be added to the CRL.
+     */
+    public void createCRL(String caCertFile, String caKeyFile, String crlFile, boolean revoke, boolean duplicate) throws Exception
+    {
+        // Load CA certificate and private key
+        X509Certificate caCert = getCertificate(new File(caCertFile));
+        PrivateKey caKey = getPrivateKey(new File(caKeyFile));
+
+        // Create CRL generator
+        X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(
+                new X500Name(caCert.getSubjectX500Principal().getName()),
+                new Date()
+        );
+
+        // Add a revoked certificate
+        if (revoke)
+        {
+            crlBuilder.addCRLEntry(
+                    BigInteger.ONE,
+                    new Date(),
+                    CRLReason.keyCompromise
+            );
+        }
+
+        // Sign the CRL
+        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256withRSA");
+        ContentSigner contentSigner = contentSignerBuilder.build(caKey);
+        X509CRLHolder crlHolder = crlBuilder.build(contentSigner);
+
+        // Write to file
+        try (FileOutputStream fos = new FileOutputStream(crlFile))
+        {
+            fos.write(crlHolder.getEncoded());
+            if (duplicate)
+            {
+                fos.write(crlHolder.getEncoded());
+            }
+        }
+    }
+
+    /**
+     * Create a corrupted CRL file.
+     *
+     * @param crlFile The output file where the corrupted CRL will be stored.
+     */
+    public void createCorruptedCRL(String crlFile) throws Exception
+    {
+        // Write gibberish to file
+        try (FileOutputStream fos = new FileOutputStream(crlFile))
+        {
+            fos.write("gibberish".getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
 }

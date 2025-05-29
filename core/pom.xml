@@ -20,10 +20,9 @@
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecchronos</groupId>
         <artifactId>parent</artifactId>
-        <version>5.0.5-SNAPSHOT</version>
+        <version>6.0.6-SNAPSHOT</version>
     </parent>
     <artifactId>core</artifactId>
-    <packaging>bundle</packaging>
     <description>Core package for scheduling and repairs</description>
     <name>EcChronos Core</name>
 
@@ -54,12 +53,12 @@
 
         <!-- Cassandra driver -->
         <dependency>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-core</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-query-builder</artifactId>
         </dependency>
 
@@ -77,6 +76,18 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!-- Test -->
@@ -117,15 +128,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>cassandra-all</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>cassandra</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -153,18 +158,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <configuration>
-                    <unpackBundle>true</unpackBundle>
-                    <manifestLocation>META-INF</manifestLocation>
-                    <instructions>
-                        <Export-Package>com.ericsson.bss.cassandra.ecchronos.core.*</Export-Package>
-                    </instructions>
-                </configuration>
             </plugin>
         </plugins>
     </build>

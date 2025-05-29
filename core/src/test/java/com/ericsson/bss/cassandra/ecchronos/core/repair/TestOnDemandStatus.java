@@ -18,7 +18,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.ericsson.bss.cassandra.ecchronos.core.AbstractCassandraTest;
+import com.ericsson.bss.cassandra.ecchronos.core.AbstractCassandraContainerTest;
 import com.ericsson.bss.cassandra.ecchronos.core.repair.OngoingJob.Status;
 import com.ericsson.bss.cassandra.ecchronos.core.repair.state.ReplicationState;
 import com.ericsson.bss.cassandra.ecchronos.core.utils.LongTokenRange;
@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class TestOnDemandStatus extends AbstractCassandraTest
+public class TestOnDemandStatus extends AbstractCassandraContainerTest
 {
     private static final String STATUS_FAILED = "failed";
     private static final String STATUS_FINISHED = "finished";
@@ -283,7 +283,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
 
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
@@ -320,7 +320,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
 
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
@@ -347,7 +347,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -368,7 +368,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -398,7 +398,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -422,7 +422,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -456,7 +456,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
 
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
@@ -483,7 +483,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -504,7 +504,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -534,7 +534,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 
@@ -565,7 +565,7 @@ public class TestOnDemandStatus extends AbstractCassandraTest
         UUID jobId = UUID.randomUUID();
         int hashValue = 1;
         TableReference tableReference = myTableReferenceFactory.forTable(KEYSPACE_NAME, TEST_TABLE_NAME);
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenMap = new HashMap<>();
+        Map<LongTokenRange, Set<DriverNode>> tokenMap = new HashMap<>();
         when(myReplicationState.getTokenRangeToReplicas(tableReference)).thenReturn(tokenMap);
         onDemandStatus.addNewJob(jobId, tableReference, hashValue, RepairOptions.RepairType.VNODE);
 

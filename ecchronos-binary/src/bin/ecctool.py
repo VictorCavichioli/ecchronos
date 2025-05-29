@@ -22,7 +22,7 @@ import signal
 import sys
 import glob
 import subprocess
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from io import open
 
 try:
@@ -38,10 +38,12 @@ SPRINGBOOT_MAIN_CLASS = "com.ericsson.bss.cassandra.ecchronos.application.spring
 
 
 def get_parser():
-    parser = ArgumentParser(description="ecctool is a command line utility which can be used to perform actions "
-                                        "towards a local ecChronos instance. The actions are implemented in form of "
-                                        "subcommands with arguments. All visualization is displayed in form of "
-                                        "human-readable tables.")
+    parser = ArgumentParser(
+        description="ecctool is a command line utility which can be used to perform actions "
+        "towards a local ecChronos instance. The actions are implemented in form of "
+        "subcommands with arguments. All visualization is displayed in form of "
+        "human-readable tables."
+    )
     sub_parsers = parser.add_subparsers(dest="subcommand")
     add_repairs_subcommand(sub_parsers)
     add_schedules_subcommand(sub_parsers)
@@ -54,160 +56,293 @@ def get_parser():
 
     return parser
 
-def add_running_job_subcommand(sub_parsers):
-    parser_repairs =  sub_parsers.add_parser("running-job", description="Show which (if any) job is currently running ")
 
-    parser_repairs.add_argument("-u", "--url", type=str,
-                                 help="The ecChronos host to connect to, specified in the format http://<host>:<port>.",
-                                    default=None)
+def add_running_job_subcommand(sub_parsers):
+    parser_repairs = sub_parsers.add_parser("running-job", description="Show which (if any) job is currently running ")
+
+    parser_repairs.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        help="The ecChronos host to connect to, specified in the format http://<host>:<port>.",
+        default=None,
+    )
 
 
 def add_repairs_subcommand(sub_parsers):
-    parser_repairs = sub_parsers.add_parser("repairs",
-                                            description="Show the status of all manual repairs. This subcommand has "
-                                                        "no mandatory parameters.")
-    parser_repairs.add_argument("-k", "--keyspace", type=str,
-                                help="Show repairs for the specified keyspace. This argument is mutually exclusive "
-                                     "with -i and --id.")
-    parser_repairs.add_argument("-t", "--table", type=str,
-                                help="Show repairs for the specified table. Keyspace argument -k or --keyspace "
-                                     "becomes mandatory if using this argument. This argument is mutually exclusive "
-                                     "with -i and --id.")
-    parser_repairs.add_argument("-u", "--url", type=str,
-                                help="The ecChronos host to connect to, specified in the format http://<host>:<port>.",
-                                default=None)
-    parser_repairs.add_argument("-i", "--id", type=str,
-                                help="Show repairs matching the specified ID. This argument is mutually exclusive "
-                                     "with -k, --keyspace, -t and --table.")
-    parser_repairs.add_argument("-l", "--limit", type=int,
-                                help="Limits the number of rows printed in the output. Specified as a number, "
-                                     "-1 to disable limit.",
-                                default=-1)
-    parser_repairs.add_argument("--hostid", type=str,
-                                help='Show repairs for the specified host id. The host id corresponds to the '
-                                     'Cassandra instance ecChronos is connected to.')
+    parser_repairs = sub_parsers.add_parser(
+        "repairs", description="Show the status of all manual repairs. This subcommand has " "no mandatory parameters."
+    )
+    parser_repairs.add_argument(
+        "-c",
+        "--column",
+        type=int,
+        nargs="*",
+        help="Output only stated columns (or all if none is given). First column is 0.",
+        default=None,
+    )
+    parser_repairs.add_argument(
+        "-k",
+        "--keyspace",
+        type=str,
+        help="Show repairs for the specified keyspace. This argument is mutually exclusive " "with -i and --id.",
+    )
+    parser_repairs.add_argument(
+        "-t",
+        "--table",
+        type=str,
+        help="Show repairs for the specified table. Keyspace argument -k or --keyspace "
+        "becomes mandatory if using this argument. This argument is mutually exclusive "
+        "with -i and --id.",
+    )
+    parser_repairs.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        help="The ecChronos host to connect to, specified in the format http://<host>:<port>.",
+        default=None,
+    )
+    parser_repairs.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        help="Show repairs matching the specified ID. This argument is mutually exclusive "
+        "with -k, --keyspace, -t and --table.",
+    )
+    parser_repairs.add_argument(
+        "-l",
+        "--limit",
+        type=int,
+        help="Limits the number of rows printed in the output. Specified as a number, " "-1 to disable limit.",
+        default=-1,
+    )
+    parser_repairs.add_argument(
+        "--hostid",
+        type=str,
+        help="Show repairs for the specified host id. The host id corresponds to the "
+        "Cassandra instance ecChronos is connected to.",
+    )
 
 
 def add_schedules_subcommand(sub_parsers):
-    parser_schedules = sub_parsers.add_parser("schedules",
-                                              description="Show the status of schedules. This subcommand has no "
-                                                          "mandatory parameters.")
-    parser_schedules.add_argument("-k", "--keyspace", type=str,
-                                  help="Show schedules for the specified keyspace. This argument is mutually "
-                                       "exclusive with -i and --id.")
-    parser_schedules.add_argument("-t", "--table", type=str,
-                                  help="Show schedules for the specified table. Keyspace argument -k or --keyspace "
-                                       "becomes mandatory if using this argument. This argument is mutually exclusive "
-                                       "with -i and --id.")
-    parser_schedules.add_argument("-u", "--url", type=str,
-                                  help="The ecChronos host to connect to, specified in the format "
-                                       "http://<host>:<port>.",
-                                  default=None)
-    parser_schedules.add_argument("-i", "--id", type=str,
-                                  help="Show schedules matching the specified ID. This argument is mutually exclusive "
-                                       "with -k, --keyspace, -t and --table.")
-    parser_schedules.add_argument("-f", "--full", action="store_true",
-                                  help="Show full schedules, can only be used with -i or --id. Full schedules include "
-                                       "schedule configuration and repair state per vnode.",
-                                  default=False)
-    parser_schedules.add_argument("-l", "--limit", type=int,
-                                  help="Limits the number of rows printed in the output. Specified as a number, "
-                                       "-1 to disable limit.",
-                                  default=-1)
+    parser_schedules = sub_parsers.add_parser(
+        "schedules", description="Show the status of schedules. This subcommand has no " "mandatory parameters."
+    )
+    parser_schedules.add_argument(
+        "-c",
+        "--column",
+        type=uint,
+        nargs="*",
+        help="Output only stated columns (or all if none is given). First column is 0.",
+        default=None,
+    )
+    parser_schedules.add_argument(
+        "-k",
+        "--keyspace",
+        type=str,
+        help="Show schedules for the specified keyspace. This argument is mutually " "exclusive with -i and --id.",
+    )
+    parser_schedules.add_argument(
+        "-t",
+        "--table",
+        type=str,
+        help="Show schedules for the specified table. Keyspace argument -k or --keyspace "
+        "becomes mandatory if using this argument. This argument is mutually exclusive "
+        "with -i and --id.",
+    )
+    parser_schedules.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        help="The ecChronos host to connect to, specified in the format " "http://<host>:<port>.",
+        default=None,
+    )
+    parser_schedules.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        help="Show schedules matching the specified ID. This argument is mutually exclusive "
+        "with -k, --keyspace, -t and --table.",
+    )
+    parser_schedules.add_argument(
+        "-f",
+        "--full",
+        action="store_true",
+        help="Show full schedules, can only be used with -i or --id. Full schedules include "
+        "schedule configuration and repair state per vnode.",
+        default=False,
+    )
+    parser_schedules.add_argument(
+        "-l",
+        "--limit",
+        type=int,
+        help="Limits the number of rows printed in the output. Specified as a number, " "-1 to disable limit.",
+        default=-1,
+    )
 
 
 def add_run_repair_subcommand(sub_parsers):
-    parser_run_repair = sub_parsers.add_parser("run-repair",
-                                               description="Run a manual repair. The manual repair will be triggered "
-                                                           "in ecChronos. EcChronos will perform repair through "
-                                                           "Cassandra JMX interface. This subcommand has no "
-                                                           "mandatory parameters.")
-    parser_run_repair.add_argument("-u", "--url", type=str,
-                                   help="The ecChronos host to connect to, specified in the format "
-                                        "http://<host>:<port>.",
-                                   default=None)
-    parser_run_repair.add_argument("--local", action='store_true',
-                                   help='Run repair for the local node only, i.e repair will only be performed for '
-                                        'the ranges that the local node is a replica for.', default=False)
-    parser_run_repair.add_argument("-r", "--repair_type", type=str,
-                                   help="The type of the repair, possible values are 'vnode', 'parallel_vnode', "
-                                   "'incremental'", required=False)
-    parser_run_repair.add_argument("-k", "--keyspace", type=str,
-                                   help="Run repair for the specified keyspace. Repair will be run for all tables "
-                                        "within the keyspace with replication factor higher than 1.", required=False)
-    parser_run_repair.add_argument("-t", "--table", type=str,
-                                   help="Run repair for the specified table. Keyspace argument -k or --keyspace "
-                                        "becomes mandatory if using this argument.", required=False)
+    parser_run_repair = sub_parsers.add_parser(
+        "run-repair",
+        description="Run a manual repair. The manual repair will be triggered "
+        "in ecChronos. EcChronos will perform repair through "
+        "Cassandra JMX interface. This subcommand has no "
+        "mandatory parameters.",
+    )
+    parser_run_repair.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        help="The ecChronos host to connect to, specified in the format " "http://<host>:<port>.",
+        default=None,
+    )
+    parser_run_repair.add_argument(
+        "--local",
+        action="store_true",
+        help="Run repair for the local node only, i.e repair will only be performed for "
+        "the ranges that the local node is a replica for.",
+        default=False,
+    )
+    parser_run_repair.add_argument(
+        "-r",
+        "--repair_type",
+        type=str,
+        help="The type of the repair, possible values are 'vnode', 'parallel_vnode', " "'incremental'",
+        required=False,
+    )
+    parser_run_repair.add_argument(
+        "-k",
+        "--keyspace",
+        type=str,
+        help="Run repair for the specified keyspace. Repair will be run for all tables "
+        "within the keyspace with replication factor higher than 1.",
+        required=False,
+    )
+    parser_run_repair.add_argument(
+        "-t",
+        "--table",
+        type=str,
+        help="Run repair for the specified table. Keyspace argument -k or --keyspace "
+        "becomes mandatory if using this argument.",
+        required=False,
+    )
 
 
 def add_repair_info_subcommand(sub_parsers):
-    parser_repair_info = sub_parsers.add_parser("repair-info",
-                                                description="Get information about repairs for tables. The repair "
-                                                            "information is based on repair history, meaning that "
-                                                            "both manual repairs and schedules will contribute to the "
-                                                            "repair information. This subcommand requires the user to "
-                                                            "provide either --since or --duration if --keyspace and "
-                                                            "--table is not provided. If repair info is fetched for a "
-                                                            "specific table using --keyspace and --table, "
-                                                            "the duration will default to the table's "
-                                                            "GC_GRACE_SECONDS.")
-    parser_repair_info.add_argument("-k", "--keyspace", type=str,
-                                    help="Show repair information for all tables in the specified keyspace.")
-    parser_repair_info.add_argument("-t", "--table", type=str,
-                                    help="Show repair information for the specified table. Keyspace argument -k or "
-                                         "--keyspace becomes mandatory if using this argument.")
-    parser_repair_info.add_argument("-s", "--since", type=str,
-                                    help="Show repair information since the specified date to now. Date must be "
-                                         "specified in ISO8601 format. The time-window will be since to now. "
-                                         "Mandatory if --duration or --keyspace and --table is not specified.",
-                                    default=None)
-    parser_repair_info.add_argument("-d", "--duration", type=str,
-                                    help="Show repair information for the duration. Duration can be specified as "
-                                         "ISO8601 format or as simple format in form: 5s, 5m, 5h, 5d. The time-window "
-                                         "will be now-duration to now. Mandatory if --since or --keyspace and --table "
-                                         "is not specified.",
-                                    default=None)
-    parser_repair_info.add_argument("--local", action='store_true',
-                                    help='Show repair information only for the local node.',
-                                    default=False)
-    parser_repair_info.add_argument("-u", "--url", type=str,
-                                    help="The ecChronos host to connect to, specified in the format "
-                                         "http://<host>:<port>.",
-                                    default=None)
-    parser_repair_info.add_argument("-l", "--limit", type=int,
-                                    help="Limits the number of rows printed in the output. Specified as a number, "
-                                         "-1 to disable limit.",
-                                    default=-1)
+    parser_repair_info = sub_parsers.add_parser(
+        "repair-info",
+        description="Get information about repairs for tables. The repair "
+        "information is based on repair history, meaning that "
+        "both manual repairs and schedules will contribute to the "
+        "repair information. This subcommand requires the user to "
+        "provide either --since or --duration if --keyspace and "
+        "--table is not provided. If repair info is fetched for a "
+        "specific table using --keyspace and --table, "
+        "the duration will default to the table's "
+        "GC_GRACE_SECONDS.",
+    )
+    parser_repair_info.add_argument(
+        "-c",
+        "--column",
+        type=uint,
+        nargs="*",
+        help="Output only stated columns (or all if none is given). First column is 0.",
+        default=None,
+    )
+    parser_repair_info.add_argument(
+        "-k", "--keyspace", type=str, help="Show repair information for all tables in the specified keyspace."
+    )
+    parser_repair_info.add_argument(
+        "-t",
+        "--table",
+        type=str,
+        help="Show repair information for the specified table. Keyspace argument -k or "
+        "--keyspace becomes mandatory if using this argument.",
+    )
+    parser_repair_info.add_argument(
+        "-s",
+        "--since",
+        type=str,
+        help="Show repair information since the specified date to now. Date must be "
+        "specified in ISO8601 format. The time-window will be since to now. "
+        "Mandatory if --duration or --keyspace and --table is not specified.",
+        default=None,
+    )
+    parser_repair_info.add_argument(
+        "-d",
+        "--duration",
+        type=str,
+        help="Show repair information for the duration. Duration can be specified as "
+        "ISO8601 format or as simple format in form: 5s, 5m, 5h, 5d. The time-window "
+        "will be now-duration to now. Mandatory if --since or --keyspace and --table "
+        "is not specified.",
+        default=None,
+    )
+    parser_repair_info.add_argument(
+        "--local", action="store_true", help="Show repair information only for the local node.", default=False
+    )
+    parser_repair_info.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        help="The ecChronos host to connect to, specified in the format " "http://<host>:<port>.",
+        default=None,
+    )
+    parser_repair_info.add_argument(
+        "-l",
+        "--limit",
+        type=int,
+        help="Limits the number of rows printed in the output. Specified as a number, " "-1 to disable limit.",
+        default=-1,
+    )
 
 
 def add_start_subcommand(sub_parsers):
-    parser_config = sub_parsers.add_parser("start",
-                                           description="Start the ecChronos service. This subcommand has no mandatory "
-                                                       "parameters.")
-    parser_config.add_argument("-f", "--foreground", action="store_true",
-                               help="Start the ecChronos instance in foreground mode (exec in current terminal and "
-                                    "log to stdout)", default=False)
-    parser_config.add_argument("-p", "--pidfile", type=str,
-                               help="Start the ecChronos instance and store the pid in the specified pid file.")
+    parser_config = sub_parsers.add_parser(
+        "start", description="Start the ecChronos service. This subcommand has no mandatory " "parameters."
+    )
+    parser_config.add_argument(
+        "-f",
+        "--foreground",
+        action="store_true",
+        help="Start the ecChronos instance in foreground mode (exec in current terminal and " "log to stdout)",
+        default=False,
+    )
+    parser_config.add_argument(
+        "-p", "--pidfile", type=str, help="Start the ecChronos instance and store the pid in the specified pid file."
+    )
 
 
 def add_stop_subcommand(sub_parsers):
-    parser_stop = sub_parsers.add_parser("stop",
-                                         description="Stop the ecChronos instance. Stopping of ecChronos is done by "
-                                                     "using kill with SIGTERM signal (same as kill in shell) for the "
-                                                     "pid. This subcommand has no mandatory parameters.")
-    parser_stop.add_argument("-p", "--pidfile", type=str,
-                             help="Stops the ecChronos instance by pid fetched from the specified pid file.")
+    parser_stop = sub_parsers.add_parser(
+        "stop",
+        description="Stop the ecChronos instance. Stopping of ecChronos is done by "
+        "using kill with SIGTERM signal (same as kill in shell) for the "
+        "pid. This subcommand has no mandatory parameters.",
+    )
+    parser_stop.add_argument(
+        "-p", "--pidfile", type=str, help="Stops the ecChronos instance by pid fetched from the specified pid file."
+    )
 
 
 def add_status_subcommand(sub_parsers):
-    parser_status = sub_parsers.add_parser("status",
-                                           description="View status of ecChronos instance. This subcommand has no "
-                                                       "mandatory parameters.")
-    parser_status.add_argument("-u", "--url", type=str,
-                               help="The ecChronos host to connect to, specified in the format "
-                                    "http://<host>:<port>.",
-                               default=None)
+    parser_status = sub_parsers.add_parser(
+        "status", description="View status of ecChronos instance. This subcommand has no " "mandatory parameters."
+    )
+    parser_status.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        help="The ecChronos host to connect to, specified in the format " "http://<host>:<port>.",
+        default=None,
+    )
+
+
+def uint(value):
+    ivalue = int(value)
+    if ivalue < 0:
+        raise ArgumentTypeError(f"{value} is negative. Only non-negative integers are allowed.")
+    return ivalue
 
 
 def schedules(arguments):
@@ -222,7 +357,7 @@ def schedules(arguments):
             result = request.get_schedule(job_id=arguments.id)
 
         if result.is_successful():
-            table_printer.print_schedule(result.data, arguments.limit, full)
+            table_printer.print_schedule(result.data, arguments.limit, full, arguments.column)
         else:
             print(result.format_exception())
     elif arguments.full:
@@ -234,13 +369,13 @@ def schedules(arguments):
             sys.exit(1)
         result = request.list_schedules(keyspace=arguments.keyspace, table=arguments.table)
         if result.is_successful():
-            table_printer.print_schedules(result.data, arguments.limit)
+            table_printer.print_schedules(result.data, arguments.limit, arguments.column)
         else:
             print(result.format_exception())
     else:
         result = request.list_schedules(keyspace=arguments.keyspace)
         if result.is_successful():
-            table_printer.print_schedules(result.data, arguments.limit)
+            table_printer.print_schedules(result.data, arguments.limit, arguments.column)
         else:
             print(result.format_exception())
 
@@ -259,13 +394,13 @@ def repairs(arguments):
             sys.exit(1)
         result = request.list_repairs(keyspace=arguments.keyspace, table=arguments.table, host_id=arguments.hostid)
         if result.is_successful():
-            table_printer.print_repairs(result.data, arguments.limit)
+            table_printer.print_repairs(result.data, arguments.limit, arguments.column)
         else:
             print(result.format_exception())
     else:
         result = request.list_repairs(keyspace=arguments.keyspace, host_id=arguments.hostid)
         if result.is_successful():
-            table_printer.print_repairs(result.data, arguments.limit)
+            table_printer.print_repairs(result.data, arguments.limit, arguments.column)
         else:
             print(result.format_exception())
 
@@ -275,8 +410,9 @@ def run_repair(arguments):
     if not arguments.keyspace and arguments.table:
         print("--keyspace must be specified if table is specified")
         sys.exit(1)
-    result = request.post(keyspace=arguments.keyspace, table=arguments.table, local=arguments.local,
-                          repair_type=arguments.repair_type)
+    result = request.post(
+        keyspace=arguments.keyspace, table=arguments.table, local=arguments.local, repair_type=arguments.repair_type
+    )
     if result.is_successful():
         table_printer.print_repairs(result.data)
     else:
@@ -297,11 +433,15 @@ def repair_info(arguments):
             print("'+' and '-' is not allowed in duration, check help for more information")
             sys.exit(1)
         duration = arguments.duration.upper()
-    result = request.get_repair_info(keyspace=arguments.keyspace, table=arguments.table,
-                                     since=arguments.since, duration=duration,
-                                     local=arguments.local)
+    result = request.get_repair_info(
+        keyspace=arguments.keyspace,
+        table=arguments.table,
+        since=arguments.since,
+        duration=duration,
+        local=arguments.local,
+    )
     if result.is_successful():
-        table_printer.print_repair_info(result.data, arguments.limit)
+        table_printer.print_repair_info(result.data, arguments.limit, arguments.column)
     else:
         print(result.format_exception())
 
@@ -336,8 +476,12 @@ def get_jvm_opts(conf_dir):
 def run_ecc(cwd, command, arguments):
     if arguments.foreground:
         command += " -f"
-    proc = subprocess.Popen(command.split(" "), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, # pylint: disable=consider-using-with
-                            cwd=cwd)
+    proc = subprocess.Popen(  # pylint: disable=consider-using-with
+        command.split(" "),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
     pid = proc.pid
     print("ecc started with pid {0}".format(pid))
     pid_file = os.path.join(cwd, DEFAULT_PID_FILE)
@@ -377,11 +521,11 @@ def status(arguments, print_running=False):
         print("ecChronos is not running")
         sys.exit(1)
 
+
 def running_job(arguments):
     request = rest.V2RepairSchedulerRequest(base_url=arguments.url)
     result = request.running_job()
     print(result)
-
 
 
 def run_subcommand(arguments):

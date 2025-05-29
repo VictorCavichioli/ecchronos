@@ -31,7 +31,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,7 +122,7 @@ public final class EccRepairHistory implements RepairHistory, RepairHistoryProvi
     {
         Preconditions.checkArgument(participants.contains(localNode),
                 "Local node must be part of repair");
-        ImmutableSet<DriverNode> nodes = replicationState.getNodes(tableReference, range);
+        Set<DriverNode> nodes = replicationState.getNodes(tableReference, range);
         if (nodes == null || !nodes.equals(participants))
         {
             return new NoOpRepairSession();
@@ -361,14 +360,11 @@ public final class EccRepairHistory implements RepairHistory, RepairHistoryProvi
                 catch (ExecutionException | TimeoutException e)
                 {
                     UUID participant = entry.getKey();
+                    LOG.warn("Unable to update repair history for {} - {}, retrying", participant, this);
                     if (!loggedException)
                     {
-                        LOG.warn("Unable to update repair history for {} - {}, retrying", participant, this, e);
+                        LOG.warn("", e);
                         loggedException = true;
-                    }
-                    else
-                    {
-                        LOG.warn("Unable to update repair history for {} - {}, retrying", participant, this);
                     }
                     insertFunction.apply(participant);
                 }
