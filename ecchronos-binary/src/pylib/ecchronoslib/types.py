@@ -45,15 +45,17 @@ class VnodeState(object):
     def get_last_repaired_at(self):
         return datetime.datetime.fromtimestamp(self.last_repaired_at_in_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
+    def to_dict(self):
+        return self.__dict__
+
 
 class Job(object):
-
     def __init__(self, data):
+        self.job_id = data["id"] if "id" in data else "<UNKNOWN>"
         self.keyspace = data["keyspace"] if "keyspace" in data else "<UNKNOWN>"
         self.table = data["table"] if "table" in data else "<UNKNOWN>"
         self.repaired_ratio = float(data["repairedRatio"] if "repairedRatio" in data else 0)
         self.status = data["status"] if "status" in data else "<UNKNOWN>"
-        self.job_id = data["id"] if "id" in data else "<UNKNOWN>"
 
     def is_valid(self):
         return self.keyspace != "<UNKNOWN>"
@@ -61,9 +63,11 @@ class Job(object):
     def get_repair_percentage(self):
         return "{0:.2f}".format(self.repaired_ratio * 100.0)
 
+    def to_dict(self):
+        return self.__dict__
+
 
 class Repair(Job):
-
     def __init__(self, data):
         Job.__init__(self, data)
         self.completed_at = int(data["completedAt"] if "completedAt" in data else -1)
@@ -75,9 +79,11 @@ class Repair(Job):
             return "-"
         return datetime.datetime.fromtimestamp(self.completed_at / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
+    def to_dict(self):
+        return self.__dict__
+
 
 class Schedule(Job):
-
     def __init__(self, data):
         Job.__init__(self, data)
         self.last_repaired_at_in_ms = int(data["lastRepairedAtInMs"] if "lastRepairedAtInMs" in data else -1)
@@ -99,6 +105,9 @@ class Schedule(Job):
             return "-"
         return datetime.datetime.fromtimestamp(self.last_repaired_at_in_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
+    def to_dict(self):
+        return self.__dict__
+
 
 class FullSchedule(Schedule):
     def __init__(self, data):
@@ -108,9 +117,14 @@ class FullSchedule(Schedule):
             for vnode_data in data["virtualNodeStates"]:
                 self.vnode_states.append(VnodeState(vnode_data))
 
+    def to_dict(self):
+        schedule_dict = super().to_dict()
+        vnode_states = [vnode.to_dict() for vnode in self.vnode_states]
+        schedule_dict["vnode_states"] = vnode_states
+        return schedule_dict
+
 
 class RepairInfo(object):
-
     def __init__(self, data):
         self.since_in_ms = int(data["sinceInMs"] if "sinceInMs" in data else -1)
         self.to_in_ms = int(data["toInMs"] if "toInMs" in data else -1)
@@ -128,7 +142,6 @@ class RepairInfo(object):
 
 
 class RepairStats(object):
-
     def __init__(self, data):
         self.keyspace = data["keyspace"] if "keyspace" in data else "<UNKNOWN>"
         self.table = data["table"] if "table" in data else "<UNKNOWN>"
@@ -165,3 +178,21 @@ class RepairStats(object):
         elif delta.microseconds > 0:
             human_readable_delta += "< 1 second"
         return human_readable_delta
+
+    def to_dict(self):
+        return self.__dict__
+
+
+class Rejection(object):
+    # pylint: disable=too-few-public-methods
+    def __init__(self, data):
+        self.keyspace = data["keyspaceName"] if "keyspaceName" in data else "<UNKNOWN>"
+        self.table = data["tableName"] if "tableName" in data else "<UNKNOWN>"
+        self.start_hour = data["startHour"] if "startHour" in data else -1
+        self.start_minute = data["startMinute"] if "startMinute" in data else -1
+        self.end_hour = data["endHour"] if "endHour" in data else -1
+        self.end_minute = data["endMinute"] if "endMinute" in data else -1
+        self.dc_exclusions = data["dcExclusions"] if "dcExclusions" in data else ["<UNKNOWN>"]
+
+    def to_dict(self):
+        return self.__dict__

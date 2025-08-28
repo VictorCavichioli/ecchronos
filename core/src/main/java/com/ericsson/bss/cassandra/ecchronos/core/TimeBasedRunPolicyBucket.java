@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Telefonaktiebolaget LM Ericsson
+ * Copyright 2025 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecchronos.connection;
+package com.ericsson.bss.cassandra.ecchronos.core;
 
-import com.datastax.oss.driver.api.core.cql.Statement;
+import java.util.Set;
 
-@FunctionalInterface
-public interface StatementDecorator
+public record TimeBasedRunPolicyBucket(
+    String keyspaceName,
+    String tableName,
+    Integer startHour,
+    Integer startMinute,
+    Integer endHour,
+    Integer endMinute,
+    Set<String> dcExclusions
+)
 {
-    /**
-     * Decorates a statement before sending it over to the server.
-     * @param statement The original statement
-     * @return The decorated statement
-     */
-    Statement apply(Statement statement);
 }
