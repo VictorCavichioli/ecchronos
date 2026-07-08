@@ -31,6 +31,10 @@ import com.ericsson.bss.cassandra.ecchronos.core.state.VnodeRepairStateFactory;
 import com.ericsson.bss.cassandra.ecchronos.core.table.TableReference;
 import com.ericsson.bss.cassandra.ecchronos.core.table.TableRepairMetrics;
 
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Supplier;
+
 public final class RepairStateFactoryImpl implements RepairStateFactory
 {
     private final HostStates myHostStates;
@@ -47,9 +51,11 @@ public final class RepairStateFactoryImpl implements RepairStateFactory
         myReplicaSetCache = new ReplicaSetCache();
 
         myVnodeRepairStateFactory = new VnodeRepairStateFactoryImpl(builder.myReplicationState,
-                builder.myRepairHistoryProvider, false, myReplicaSetCache);
+                builder.myRepairHistoryProvider, false, myReplicaSetCache,
+                builder.myCoordinatedRepair, builder.myManagedNodeIdsSupplier);
         mySubRangeRepairStateFactory = new VnodeRepairStateFactoryImpl(builder.myReplicationState,
-                builder.myRepairHistoryProvider, true, myReplicaSetCache);
+                builder.myRepairHistoryProvider, true, myReplicaSetCache,
+                builder.myCoordinatedRepair, builder.myManagedNodeIdsSupplier);
     }
 
     /**
@@ -92,6 +98,8 @@ public final class RepairStateFactoryImpl implements RepairStateFactory
         private HostStates myHostStates;
         private RepairHistoryProvider myRepairHistoryProvider;
         private TableRepairMetrics myTableRepairMetrics;
+        private boolean myCoordinatedRepair = false;
+        private Supplier<Set<UUID>> myManagedNodeIdsSupplier;
 
         /**
          * Build repair state factory with replication state.
@@ -138,6 +146,30 @@ public final class RepairStateFactoryImpl implements RepairStateFactory
         public Builder withTableRepairMetrics(final TableRepairMetrics tableRepairMetrics)
         {
             myTableRepairMetrics = tableRepairMetrics;
+            return this;
+        }
+
+        /**
+         * Build repair state factory with coordinated repair mode.
+         *
+         * @param coordinatedRepair Whether to enable coordinated range assignment.
+         * @return Builder
+         */
+        public Builder withCoordinatedRepair(final boolean coordinatedRepair)
+        {
+            myCoordinatedRepair = coordinatedRepair;
+            return this;
+        }
+
+        /**
+         * Build repair state factory with managed node IDs supplier.
+         *
+         * @param managedNodeIdsSupplier Supplier for the set of managed node IDs.
+         * @return Builder
+         */
+        public Builder withManagedNodeIdsSupplier(final Supplier<Set<UUID>> managedNodeIdsSupplier)
+        {
+            myManagedNodeIdsSupplier = managedNodeIdsSupplier;
             return this;
         }
 

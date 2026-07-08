@@ -37,6 +37,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -439,5 +440,217 @@ public class TestReplicationStateImpl
         assertThat(rangesNode1.keySet()).containsExactly(range1);
         assertThat(rangesNode2.keySet()).containsExactly(range2);
         assertThat(rangesNode1).isNotSameAs(rangesNode2);
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasLowestUuidIsCoordinator() throws Exception
+    {
+        UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID uuid3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+
+        when(mockNode1.getId()).thenReturn(uuid1);
+        when(mockNode2.getId()).thenReturn(uuid2);
+        when(mockNode3.getId()).thenReturn(uuid3);
+
+        LongTokenRange range1 = new LongTokenRange(1, 2);
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange = TokenUtil.getRange(1, 2);
+
+        doReturn(Sets.newHashSet(tokenRange)).when(mockTokenMap).getTokenRanges(eq("ks"), eq(mockReplica1));
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        // All three nodes are managed - node1 (lowest UUID) should be coordinator
+        Set<UUID> managedNodes = Sets.newHashSet(uuid1, uuid2, uuid3);
+
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica1, managedNodes);
+
+        assertThat(coordinated.keySet()).containsExactly(range1);
+        assertThat(coordinated.get(range1)).containsExactlyInAnyOrder(mockNode1, mockNode2, mockNode3);
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasNonCoordinatorGetsEmptyMap() throws Exception
+    {
+        UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID uuid3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+
+        when(mockNode1.getId()).thenReturn(uuid1);
+        when(mockNode2.getId()).thenReturn(uuid2);
+        when(mockNode3.getId()).thenReturn(uuid3);
+
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange = TokenUtil.getRange(1, 2);
+
+        // mockReplica2 sees the same range
+        doReturn(Sets.newHashSet(tokenRange)).when(mockTokenMap).getTokenRanges(eq("ks"), eq(mockReplica2));
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        // All three nodes are managed - node1 (lowest UUID) should be coordinator, not node2
+        Set<UUID> managedNodes = Sets.newHashSet(uuid1, uuid2, uuid3);
+
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica2, managedNodes);
+
+        // mockReplica2 is NOT the coordinator, so it gets no ranges
+        assertThat(coordinated).isEmpty();
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasPartialManagement() throws Exception
+    {
+        UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID uuid3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+
+        when(mockNode1.getId()).thenReturn(uuid1);
+        when(mockNode2.getId()).thenReturn(uuid2);
+        when(mockNode3.getId()).thenReturn(uuid3);
+
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange = TokenUtil.getRange(1, 2);
+
+        doReturn(Sets.newHashSet(tokenRange)).when(mockTokenMap).getTokenRanges(eq("ks"), eq(mockReplica2));
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        // Only nodes 2 and 3 are managed (node1 is NOT managed)
+        // So node2 (lowest managed UUID) becomes coordinator
+        Set<UUID> managedNodes = Sets.newHashSet(uuid2, uuid3);
+
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica2, managedNodes);
+
+        assertThat(coordinated.keySet()).hasSize(1);
+        assertThat(coordinated.values().iterator().next()).containsExactlyInAnyOrder(mockNode1, mockNode2, mockNode3);
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasNoManagedReplicasSkipsRange() throws Exception
+    {
+        UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID uuid3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+        UUID uuid4 = UUID.fromString("00000000-0000-0000-0000-000000000004");
+
+        when(mockNode1.getId()).thenReturn(uuid1);
+        when(mockNode2.getId()).thenReturn(uuid2);
+        when(mockNode3.getId()).thenReturn(uuid3);
+
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange = TokenUtil.getRange(1, 2);
+
+        doReturn(Sets.newHashSet(tokenRange)).when(mockTokenMap).getTokenRanges(eq("ks"), eq(mockReplica4));
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        // Only node4 is managed but it's not a replica for the range
+        Set<UUID> managedNodes = Sets.newHashSet(uuid4);
+
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica4, managedNodes);
+
+        assertThat(coordinated).isEmpty();
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasMultipleRangesDistributed() throws Exception
+    {
+        UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID uuid3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+
+        when(mockNode1.getId()).thenReturn(uuid1);
+        when(mockNode2.getId()).thenReturn(uuid2);
+        when(mockNode3.getId()).thenReturn(uuid3);
+
+        LongTokenRange range1 = new LongTokenRange(1, 2);
+        LongTokenRange range2 = new LongTokenRange(2, 3);
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange1 = TokenUtil.getRange(1, 2);
+        TokenRange tokenRange2 = TokenUtil.getRange(2, 3);
+
+        // Node1 sees both ranges
+        doReturn(Sets.newHashSet(tokenRange1, tokenRange2)).when(mockTokenMap)
+                .getTokenRanges(eq("ks"), eq(mockReplica1));
+        // Range1 has replicas {1, 2} → coordinator is node1 (lowest UUID)
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange1));
+        // Range2 has replicas {2, 3} → coordinator is node2 (lowest UUID among managed)
+        doReturn(Sets.newHashSet(mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange2));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        Set<UUID> managedNodes = Sets.newHashSet(uuid1, uuid2, uuid3);
+
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica1, managedNodes);
+
+        // Node1 is coordinator for range1 (it's the lowest among {1,2})
+        // Node1 is NOT coordinator for range2 (node2 is lowest among {2,3})
+        assertThat(coordinated.keySet()).containsExactly(range1);
+        assertThat(coordinated.get(range1)).containsExactlyInAnyOrder(mockNode1, mockNode2);
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasNullManagedNodesFallsBack() throws Exception
+    {
+        LongTokenRange range1 = new LongTokenRange(1, 2);
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange = TokenUtil.getRange(1, 2);
+
+        doReturn(Sets.newHashSet(tokenRange)).when(mockTokenMap).getTokenRanges(eq("ks"), eq(mockReplica1));
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        // Null managed nodes → falls back to full map
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica1, null);
+
+        assertThat(coordinated.keySet()).containsExactly(range1);
+        assertThat(coordinated.get(range1)).containsExactlyInAnyOrder(mockNode1, mockNode2, mockNode3);
+    }
+
+    @Test
+    public void testGetCoordinatedTokenRangeToReplicasEmptyManagedNodesFallsBack() throws Exception
+    {
+        LongTokenRange range1 = new LongTokenRange(1, 2);
+        TableReference tableReference = tableReference("ks", "tb");
+
+        TokenRange tokenRange = TokenUtil.getRange(1, 2);
+
+        doReturn(Sets.newHashSet(tokenRange)).when(mockTokenMap).getTokenRanges(eq("ks"), eq(mockReplica1));
+        doReturn(Sets.newHashSet(mockReplica1, mockReplica2, mockReplica3)).when(mockTokenMap)
+                .getReplicas(eq("ks"), eq(tokenRange));
+
+        ReplicationState replicationState = new ReplicationStateImpl(mockNodeResolver, mockSession);
+
+        // Empty managed nodes → falls back to full map
+        Map<LongTokenRange, ImmutableSet<DriverNode>> coordinated = replicationState.getCoordinatedTokenRangeToReplicas(
+                tableReference, mockReplica1, Sets.newHashSet());
+
+        assertThat(coordinated.keySet()).containsExactly(range1);
+        assertThat(coordinated.get(range1)).containsExactlyInAnyOrder(mockNode1, mockNode2, mockNode3);
     }
 }

@@ -18,6 +18,8 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.ericsson.bss.cassandra.ecchronos.core.metadata.DriverNode;
 import com.ericsson.bss.cassandra.ecchronos.core.table.TableReference;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -64,6 +66,22 @@ public interface ReplicationState
      * @return The map consisting of token -&gt; responsible nodes.
      */
     Map<LongTokenRange, ImmutableSet<DriverNode>> getTokenRangeToReplicas(TableReference tableReference, Node currentNode);
+
+    /**
+     * Get token ranges where the given node is the designated coordinator among the managed nodes.
+     * <p>
+     * For each range, the designated coordinator is the managed replica node with the lowest UUID.
+     * Only ranges where the current node is the designated coordinator are returned.
+     * <p>
+     * If managed nodes are not configured, this method falls back to {@link #getTokenRangeToReplicas}.
+     *
+     * @param tableReference The table used to calculate the proper replication.
+     * @param currentNode The node to check coordinator assignment for.
+     * @param managedNodeIds The set of node IDs managed by this ecChronos instance.
+     * @return The map consisting of token -&gt; responsible nodes, filtered to coordinated ranges only.
+     */
+    Map<LongTokenRange, ImmutableSet<DriverNode>> getCoordinatedTokenRangeToReplicas(
+            TableReference tableReference, Node currentNode, Set<UUID> managedNodeIds);
 
     Map<LongTokenRange, ImmutableSet<DriverNode>> getTokenRanges(TableReference tableReference, Node currentNode);
 }

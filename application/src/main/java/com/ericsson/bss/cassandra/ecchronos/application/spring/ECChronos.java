@@ -106,6 +106,8 @@ public class ECChronos implements Closeable
                 .withHostStates(myECChronosInternals.getHostStates())
                 .withRepairHistoryProvider(repairHistoryService)
                 .withTableRepairMetrics(myECChronosInternals.getTableRepairMetrics())
+                .withCoordinatedRepair(configuration.getRepairConfig().getCoordinatedRepair())
+                .withManagedNodeIdsSupplier(() -> nativeConnectionProvider.getNodes().keySet())
                 .build();
 
         myRepairSchedulerImpl = RepairSchedulerImpl.builder()

@@ -377,6 +377,15 @@ repair:
   ## incremental = repair vnodes incrementally (incremental repair)
   ##
   repair_type: vnode
+  ##
+  ## Enables coordinated range assignment for repair.
+  ## When enabled, each token range is repaired by exactly one designated coordinator node
+  ## (the managed replica with the lowest UUID), eliminating redundant repairs.
+  ## This is recommended in agent mode where one ecChronos instance manages multiple nodes.
+  ## Without this, each range is repaired RF times (once per replica that coordinates it).
+  ## Default: false (each node repairs all ranges it is a replica for, preserving sidecar behavior).
+  ##
+  coordinated_repair: false
 
 statistics:
   enabled: true

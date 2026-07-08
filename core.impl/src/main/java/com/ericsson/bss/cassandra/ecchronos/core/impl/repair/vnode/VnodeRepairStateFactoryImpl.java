@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * A repair state factory which uses a {@link RepairHistoryProvider} to determine repair state.
@@ -50,6 +52,8 @@ public class VnodeRepairStateFactoryImpl implements VnodeRepairStateFactory
     private final RepairHistoryProvider myRepairHistoryProvider;
     private final boolean useSubRanges;
     private final ReplicaSetCache myReplicaSetCache;
+    private final boolean myCoordinatedRepair;
+    private final Supplier<Set<UUID>> myManagedNodeIdsSupplier;
 
     public VnodeRepairStateFactoryImpl(
             final ReplicationState replicationState,
@@ -65,10 +69,23 @@ public class VnodeRepairStateFactoryImpl implements VnodeRepairStateFactory
             final boolean toUseSubRanges,
             final ReplicaSetCache replicaSetCache)
     {
+        this(replicationState, repairHistoryProvider, toUseSubRanges, replicaSetCache, false, null);
+    }
+
+    public VnodeRepairStateFactoryImpl(
+            final ReplicationState replicationState,
+            final RepairHistoryProvider repairHistoryProvider,
+            final boolean toUseSubRanges,
+            final ReplicaSetCache replicaSetCache,
+            final boolean coordinatedRepair,
+            final Supplier<Set<UUID>> managedNodeIdsSupplier)
+    {
         myReplicationState = replicationState;
         myRepairHistoryProvider = repairHistoryProvider;
         this.useSubRanges = toUseSubRanges;
         myReplicaSetCache = replicaSetCache;
+        myCoordinatedRepair = coordinatedRepair;
+        myManagedNodeIdsSupplier = managedNodeIdsSupplier;
     }
 
     /**
@@ -90,8 +107,16 @@ public class VnodeRepairStateFactoryImpl implements VnodeRepairStateFactory
             final TableReference tableReference, final RepairStateSnapshot previous,
             final long iterateToTime)
     {
-        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenRangeToReplicaMap
-                = myReplicationState.getTokenRangeToReplicas(tableReference, node);
+        Map<LongTokenRange, ImmutableSet<DriverNode>> tokenRangeToReplicaMap;
+        if (myCoordinatedRepair && myManagedNodeIdsSupplier != null)
+        {
+            tokenRangeToReplicaMap = myReplicationState.getCoordinatedTokenRangeToReplicas(
+                    tableReference, node, myManagedNodeIdsSupplier.get());
+        }
+        else
+        {
+            tokenRangeToReplicaMap = myReplicationState.getTokenRangeToReplicas(tableReference, node);
+        }
         long lastRepairedAt = previousLastRepairedAt(previous, tokenRangeToReplicaMap);
 
         Iterator<RepairEntry> repairEntryIterator;

@@ -299,6 +299,12 @@ public class TestConfig
     }
 
     @Test
+    public void testCoordinatedRepair()
+    {
+        assertThat(repairConfig.getCoordinatedRepair()).isTrue();
+    }
+
+    @Test
     public void testInstanceName()
     {
         assertThat(nativeConnection.getInstanceName()).isEqualTo("unique_identifier");

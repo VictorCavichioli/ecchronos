@@ -99,6 +99,7 @@ repair:
     time: 35
     unit: SECONDS
   repair_type: vnode
+  coordinated_repair: true
 
 scheduler:
   frequency:

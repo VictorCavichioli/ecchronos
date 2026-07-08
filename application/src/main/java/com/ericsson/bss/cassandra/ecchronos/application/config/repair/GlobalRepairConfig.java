@@ -32,6 +32,7 @@ public class GlobalRepairConfig extends RepairConfig
     private Interval myRepairHistoryLookback = new Interval(THIRTY_DAYS, TimeUnit.DAYS);
     private RepairHistory myRepairHistory = new RepairHistory();
     private RepairLockType myRepairLockType = RepairLockType.VNODE;
+    private boolean myCoordinatedRepair = false;
 
     @JsonProperty("provider")
     public final Class<? extends AbstractRepairConfigurationProvider> getRepairConfigurationClass()
@@ -82,6 +83,18 @@ public class GlobalRepairConfig extends RepairConfig
     public final void setRepairHistory(final RepairHistory repairHistory)
     {
         myRepairHistory = repairHistory;
+    }
+
+    @JsonProperty("coordinated_repair")
+    public final boolean getCoordinatedRepair()
+    {
+        return myCoordinatedRepair;
+    }
+
+    @JsonProperty("coordinated_repair")
+    public final void setCoordinatedRepair(final boolean coordinatedRepair)
+    {
+        myCoordinatedRepair = coordinatedRepair;
     }
 }
 

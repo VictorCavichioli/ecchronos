@@ -20,11 +20,13 @@ import com.ericsson.bss.cassandra.ecchronos.core.state.LongTokenRange;
 import com.ericsson.bss.cassandra.ecchronos.core.state.ReplicationState;
 import com.ericsson.bss.cassandra.ecchronos.core.table.TableReference;
 import java.net.InetSocketAddress;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -152,6 +154,47 @@ public class ReplicationStateImpl implements ReplicationState
     {
         String keyspace = tableReference.getKeyspace();
         return maybeRenew(keyspace, currentNode);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<LongTokenRange, ImmutableSet<DriverNode>> getCoordinatedTokenRangeToReplicas(
+            final TableReference tableReference,
+            final Node currentNode,
+            final Set<UUID> managedNodeIds)
+    {
+        Map<LongTokenRange, ImmutableSet<DriverNode>> fullMap = getTokenRangeToReplicas(tableReference, currentNode);
+
+        if (managedNodeIds == null || managedNodeIds.isEmpty())
+        {
+            return fullMap;
+        }
+
+        ImmutableMap.Builder<LongTokenRange, ImmutableSet<DriverNode>> filtered = ImmutableMap.builder();
+        for (Map.Entry<LongTokenRange, ImmutableSet<DriverNode>> entry : fullMap.entrySet())
+        {
+            if (isDesignatedCoordinator(currentNode, entry.getValue(), managedNodeIds))
+            {
+                filtered.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return filtered.build();
+    }
+
+    private boolean isDesignatedCoordinator(
+            final Node currentNode,
+            final ImmutableSet<DriverNode> replicas,
+            final Set<UUID> managedNodeIds)
+    {
+        UUID designatedId = replicas.stream()
+                .map(DriverNode::getId)
+                .filter(managedNodeIds::contains)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+
+        return currentNode.getHostId().equals(designatedId);
     }
 
     private ImmutableMap<LongTokenRange, ImmutableSet<DriverNode>> maybeRenew(

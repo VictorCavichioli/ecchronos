@@ -185,6 +185,12 @@ public class TestDefaultConfig
     }
 
     @Test
+    public void testCoordinatedRepairDefaultsFalse()
+    {
+        assertThat(repairConfig.getCoordinatedRepair()).isFalse();
+    }
+
+    @Test
     public void testJolokiaConfig()
     {
         JolokiaConfig jolokiaConfig = config.getConnectionConfig().getJmxConnection().getJolokiaConfig();
